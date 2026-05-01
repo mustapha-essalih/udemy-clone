@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "course_id": { "type": "keyword" },
+    "title": { "type": "text" },
+    "description": { "type": "text" },
+    "category": { "type": "keyword" },
+    "instructor_name": { "type": "text" },
+    "rating": { "type": "float" },
+    "price": { "type": "float" },
+    "tags": { "type": "keyword" }
+  }
+}

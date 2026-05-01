@@ -1,0 +1,43 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
+.apt_generated
+
+# Logs
+*.log
+logs/
+
+# Java/Maven
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+HELP.md
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+CLAUDE.md
+TODO.md
