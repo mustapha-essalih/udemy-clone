@@ -6,52 +6,53 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      mvc:
-        routes:
-          - id: auth-service
-            uri: lb://auth-service
-            predicates:
-              - Path=/api/auth/**
-          - id: user-service
-            uri: lb://user-service
-            predicates:
-              - Path=/api/users/**
-          - id: course-service
-            uri: lb://course-service
-            predicates:
-              - Path=/api/courses/**
-          - id: content-service
-            uri: lb://content-service
-            predicates:
-              - Path=/api/content/**
-          - id: enrollment-service
-            uri: lb://enrollment-service
-            predicates:
-              - Path=/api/enrollments/**
-          - id: payment-service
-            uri: lb://payment-service
-            predicates:
-              - Path=/api/payments/**
-          - id: review-service
-            uri: lb://review-service
-            predicates:
-              - Path=/api/reviews/**
-          - id: notification-service
-            uri: lb://notification-service
-            predicates:
-              - Path=/api/notifications/**
-          - id: analytics-service
-            uri: lb://analytics-service
-            predicates:
-              - Path=/api/analytics/**
-          - id: admin-service
-            uri: lb://admin-service
-            predicates:
-              - Path=/api/admin/**
-          - id: search-service
-            uri: lb://search-service
-            predicates:
-              - Path=/api/search/**
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/**
+            - id: course-service
+              uri: lb://course-service
+              predicates:
+                - Path=/api/courses/**
+            - id: content-service
+              uri: lb://content-service
+              predicates:
+                - Path=/api/content/**
+            - id: enrollment-service
+              uri: lb://enrollment-service
+              predicates:
+                - Path=/api/enrollments/**
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/payments/**
+            - id: review-service
+              uri: lb://review-service
+              predicates:
+                - Path=/api/reviews/**
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+            - id: analytics-service
+              uri: lb://analytics-service
+              predicates:
+                - Path=/api/analytics/**
+            - id: admin-service
+              uri: lb://admin-service
+              predicates:
+                - Path=/api/admin/**
+            - id: search-service
+              uri: lb://search-service
+              predicates:
+                - Path=/api/search/**
 
 eureka:
   client:

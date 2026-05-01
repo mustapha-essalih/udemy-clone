@@ -57,3 +57,4 @@ docker-compose.override.yml
 # CLAUDE
 CLAUDE.md
 TODO.md
+.claude/
