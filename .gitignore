@@ -58,3 +58,6 @@ docker-compose.override.yml
 CLAUDE.md
 TODO.md
 .claude/
+
+uploads/
+

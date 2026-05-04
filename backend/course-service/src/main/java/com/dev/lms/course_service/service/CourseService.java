@@ -114,6 +114,7 @@ public class CourseService {
         return new LessonResponse(
                 l.getLessonId(), l.getSectionId(), l.getTitle(), l.getLessonType().name(),
                 vc != null ? vc.getVideoUrl() : null,
+                l.getTextUrl(),
                 vc != null ? vc.getDurationMinutes() : null,
                 vc != null ? vc.getIsPreview() : null,
                 l.getCreatedAt()

@@ -1,4 +1,4 @@
-CREATE TABLE course_reviews_queue (
+CREATE TABLE IF NOT EXISTS course_reviews_queue (
     id UUID PRIMARY KEY,
     course_id UUID,
     status VARCHAR(20),
@@ -7,7 +7,7 @@ CREATE TABLE course_reviews_queue (
     reviewed_at TIMESTAMP
 );
 
-CREATE TABLE reports (
+CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY,
     target_type VARCHAR(20),
     target_id UUID,

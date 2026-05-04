@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +23,7 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public Mono<ResponseEntity<ApiResponse<CourseResponse>>> create(
             @Valid @RequestBody CreateCourseRequest request) {
         return courseService.create(request)
@@ -30,12 +32,14 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR', 'MANAGER', 'ADMIN')")
     public Mono<ResponseEntity<ApiResponse<CourseResponse>>> getById(@PathVariable UUID courseId) {
         return courseService.getById(courseId)
                 .map(course -> ResponseEntity.ok(ApiResponse.ok(course)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public Mono<ResponseEntity<ApiResponse<List<CourseResponse>>>> listByInstructor(
             @RequestParam UUID instructorId) {
         return courseService.listByInstructor(instructorId)

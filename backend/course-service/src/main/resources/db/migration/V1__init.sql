@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS lessons (
     lesson_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     section_id UUID NOT NULL REFERENCES sections(section_id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    lesson_type VARCHAR(10) NOT NULL CHECK (lesson_type IN ('VIDEO', 'TEXT')),
+    lesson_type VARCHAR(10) NOT NULL CHECK (lesson_type IN ('VIDEO', 'TEXT' , 'ARTICLE')),
     text_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS resources (
     file_type VARCHAR(50)
 );
 
+ 
 CREATE INDEX IF NOT EXISTS idx_courses_instructor ON courses(instructor_id);
 CREATE INDEX IF NOT EXISTS idx_sections_course ON sections(course_id);
 CREATE INDEX IF NOT EXISTS idx_lessons_section ON lessons(section_id);

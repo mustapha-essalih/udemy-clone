@@ -9,6 +9,7 @@ public record LessonResponse(
         String title,
         String lessonType,
         String videoUrl,
+        String textUrl,
         Integer durationMinutes,
         Boolean isPreview,
         LocalDateTime createdAt
