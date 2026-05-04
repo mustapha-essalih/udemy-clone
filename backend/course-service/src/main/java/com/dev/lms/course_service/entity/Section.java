@@ -7,22 +7,17 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "sections")
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class Section {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "section_id")
+    private UUID sectionId;
 
     @Column(name = "course_id", nullable = false)
     private UUID courseId;
 
+    @Column(nullable = false)
     private String title;
-
-    @Column(name = "order_index")
-    private Integer orderIndex;
 }

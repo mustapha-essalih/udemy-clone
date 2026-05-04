@@ -3,6 +3,8 @@ package com.dev.lms.content_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,15 +12,28 @@ import java.util.UUID;
 @Table(name = "media_files")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class MediaFile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "owner_id")
+    @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
-    @Column(name = "file_name")
+    @Column(name = "course_id")
+    private UUID courseId;
+
+    @Column(name = "section_id")
+    private UUID sectionId;
+
+    @Column(name = "lesson_id")
+    private UUID lessonId;
+
+    @Column(name = "file_name", nullable = false)
     private String fileName;
+
+    @Column(name = "original_name")
+    private String originalName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "file_type", length = 20)
@@ -29,9 +44,8 @@ public class MediaFile {
 
     private Long size;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "storage_provider", length = 10)
-    private StorageProvider storageProvider;
+    @Column(name = "local_path", columnDefinition = "TEXT")
+    private String localPath;
 
     @Column(name = "storage_key", columnDefinition = "TEXT")
     private String storageKey;
@@ -40,10 +54,20 @@ public class MediaFile {
     private String url;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private MediaStatus status;
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private MediaStatus status = MediaStatus.READY;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_provider", nullable = false, length = 10)
+    @Builder.Default
+    private StorageProvider storageProvider = StorageProvider.LOCAL;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

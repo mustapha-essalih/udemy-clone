@@ -1,0 +1,7 @@
+content:
+  storage:
+    s3:
+      bucket: ${S3_BUCKET}
+      region: ${AWS_REGION:us-east-1}
+      presign-duration-minutes: ${S3_PRESIGN_DURATION_MINUTES:60}
+      temp-dir: ${S3_TEMP_DIR:/tmp/content-uploads}

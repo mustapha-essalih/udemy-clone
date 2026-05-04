@@ -1,5 +1,5 @@
 package com.dev.lms.course_service.entity;
 
 public enum CourseLevel {
-    BEGINNER, INTERMEDIATE, ADVANCED
+    ALL_LEVELS, BEGINNER, INTERMEDIATE, ADVANCED
 }

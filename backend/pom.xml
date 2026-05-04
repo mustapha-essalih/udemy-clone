@@ -37,6 +37,7 @@
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
 		<spring-ai.version>2.0.0-M5</spring-ai.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
+		<awssdk.version>2.26.21</awssdk.version>
 	</properties>
 
 	<dependencyManagement>
@@ -64,6 +65,13 @@
 				<groupId>org.mapstruct</groupId>
 				<artifactId>mapstruct</artifactId>
 				<version>${mapstruct.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
