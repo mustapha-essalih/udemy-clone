@@ -1,11 +1,11 @@
 package com.dev.lms.course_service.controller;
 
 import com.dev.lms.common.response.ApiResponse;
+import com.dev.lms.course_service.dto.CreateDraftRequest;
 import com.dev.lms.course_service.dto.DraftResponse;
-import com.dev.lms.course_service.dto.RejectDraftRequest;
 import com.dev.lms.course_service.dto.UpdateDraftRequest;
-import com.dev.lms.course_service.dto.UpdateVideoContentRequest;
 import com.dev.lms.course_service.dto.UpdateTextContentRequest;
+import com.dev.lms.course_service.dto.UpdateVideoContentRequest;
 import com.dev.lms.course_service.service.CourseDraftService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,34 +17,41 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/courses/drafts")
+@RequestMapping("/api/courses/instructor")
 @RequiredArgsConstructor
-public class CourseDraftController {
+public class InstructorCourseController {
 
     private final CourseDraftService draftService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<DraftResponse>>> listByInstructor(
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<List<DraftResponse>>> listMyCourses(
             @RequestHeader("X-User-Id") String userId) {
+                System.out.println(userId);
         return ResponseEntity.ok(ApiResponse.ok(draftService.listByInstructor(UUID.fromString(userId))));
     }
 
-    @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<DraftResponse>>> listPending() {
-        return ResponseEntity.ok(ApiResponse.ok(draftService.listPending()));
+    @PostMapping
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<DraftResponse>> createCourse(
+            @Valid @RequestBody CreateDraftRequest request,
+            @RequestHeader("X-User-Id") String userId) {
+        DraftResponse draft = draftService.create(UUID.fromString(userId), request);
+        return ResponseEntity.ok(ApiResponse.ok("Course draft created", draft));
     }
 
     @GetMapping("/{draftId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'MANAGER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<DraftResponse>> getById(@PathVariable String draftId) {
-        return ResponseEntity.ok(ApiResponse.ok(draftService.getById(draftId)));
+    public ResponseEntity<ApiResponse<DraftResponse>> getCourseById(
+            @PathVariable String draftId,
+            @RequestHeader("X-Role") String role,
+            @RequestHeader("X-User-Id") String userId) {
+        return ResponseEntity.ok(ApiResponse.ok(draftService.getById(draftId, role, UUID.fromString(userId))));
     }
 
     @PutMapping("/{draftId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApiResponse<DraftResponse>> update(
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<DraftResponse>> updateCourse(
             @PathVariable String draftId,
             @Valid @RequestBody UpdateDraftRequest request,
             @RequestHeader("X-User-Id") String userId) {
@@ -52,29 +59,15 @@ public class CourseDraftController {
     }
 
     @PostMapping("/{draftId}/submit")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApiResponse<DraftResponse>> submit(
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<DraftResponse>> submitForReview(
             @PathVariable String draftId,
             @RequestHeader("X-User-Id") String userId) {
         return ResponseEntity.ok(ApiResponse.ok("Course submitted for review", draftService.submit(draftId, UUID.fromString(userId))));
     }
 
-    @PostMapping("/{draftId}/approve")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<Object>> approve(@PathVariable String draftId) {
-        return ResponseEntity.ok(ApiResponse.ok("Course approved and published", (Object) draftService.approve(draftId)));
-    }
-
-    @PostMapping("/{draftId}/reject")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<DraftResponse>> reject(
-            @PathVariable String draftId,
-            @Valid @RequestBody RejectDraftRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok("Course rejected", draftService.reject(draftId, request.feedback())));
-    }
-
     @PutMapping("/{draftId}/sections/{sectionId}/lessons/{lessonId}/video-url")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<DraftResponse>> updateVideoUrl(
             @PathVariable String draftId,
             @PathVariable String sectionId,
@@ -84,7 +77,7 @@ public class CourseDraftController {
     }
 
     @PutMapping("/{draftId}/sections/{sectionId}/lessons/{lessonId}/text-url")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<DraftResponse>> updateTextUrl(
             @PathVariable String draftId,
             @PathVariable String sectionId,

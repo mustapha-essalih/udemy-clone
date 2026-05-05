@@ -2,6 +2,7 @@ package com.dev.lms.course_service.service;
 
 import com.dev.lms.course_service.dto.*;
 import com.dev.lms.course_service.entity.*;
+import com.dev.lms.course_service.exception.BusinessException;
 import com.dev.lms.course_service.exception.ResourceNotFoundException;
 import com.dev.lms.course_service.repository.*;
 import lombok.RequiredArgsConstructor;

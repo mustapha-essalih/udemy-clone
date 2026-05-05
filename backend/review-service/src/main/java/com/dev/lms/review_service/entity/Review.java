@@ -8,7 +8,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "reviews")
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter 
+@Setter 
+@Builder 
+@NoArgsConstructor 
+@AllArgsConstructor
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

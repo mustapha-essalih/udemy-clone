@@ -2,7 +2,12 @@ package com.dev.lms.admin_service.client;
 
 import com.dev.lms.admin_service.dto.CategoryDto;
 import com.dev.lms.admin_service.dto.CourseDraftDto;
+import com.dev.lms.admin_service.dto.CreateCategoryRequest;
+import com.dev.lms.admin_service.dto.CreateSubCategoryRequest;
+import com.dev.lms.admin_service.dto.RejectRequest;
 import com.dev.lms.admin_service.dto.SubCategoryDto;
+import com.dev.lms.admin_service.dto.UpdateCategoryRequest;
+import com.dev.lms.admin_service.dto.UpdateSubCategoryRequest;
 import com.dev.lms.common.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.ParameterizedTypeReference;
@@ -183,9 +188,4 @@ public class CourseServiceClient {
                 .block();
     }
 
-    private record CreateCategoryRequest(String name) {}
-    private record UpdateCategoryRequest(String name) {}
-    private record CreateSubCategoryRequest(String name, UUID categoryId) {}
-    private record UpdateSubCategoryRequest(String name) {}
-    private record RejectRequest(String feedback) {}
 }

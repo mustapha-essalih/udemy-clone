@@ -61,8 +61,14 @@ public class CourseDraftService {
         return toResponse(draft);
     }
 
-    public DraftResponse getById(String draftId) {
-        return toResponse(fetch(draftId));
+    public DraftResponse getById(String draftId, String role, UUID instructorId) {
+        CourseDraft draft = fetch(draftId);
+
+        if (!draft.getInstructorId().equals(instructorId) && !role.equals("ADMIN") && !role.equals("MANAGER")) {
+            throw new BusinessException("Not authorized to view this draft");
+        }
+
+        return toResponse(draft);
     }
 
     public List<DraftResponse> listByInstructor(UUID instructorId) {
