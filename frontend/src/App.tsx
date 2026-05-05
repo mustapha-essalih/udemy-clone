@@ -8,6 +8,7 @@ import CreateCoursePage from './pages/CreateCoursePage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import CoursePlayerPage from './features/course-player/CoursePlayerPage';
+import SearchPage from './features/search/SearchPage';
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

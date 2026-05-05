@@ -33,6 +33,9 @@ export default function DashboardPage() {
       <header className="page-header">
         <h1>Dashboard</h1>
         <div className="header-right">
+          <Link to="/search" className="btn-secondary" style={{ fontSize: 13 }}>
+            🔍 Search Courses
+          </Link>
           <span className="user-info">
             {user?.email} <span className="role-badge">{user?.role}</span>
           </span>

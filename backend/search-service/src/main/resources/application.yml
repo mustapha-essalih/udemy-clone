@@ -1,0 +1,76 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: search-service
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:elastic}
+    password: ${ELASTICSEARCH_PASSWORD:9898}
+    socket-timeout: 10s
+    connection-timeout: 5s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: search-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        reconnect.backoff.ms: 1000
+        reconnect.backoff.max.ms: 10000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      missing-topics-fatal: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 30
+    eureka-server-connect-timeout-seconds: 5
+    eureka-server-read-timeout-seconds: 8
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+search:
+  index:
+    courses: courses
+    suggestions: search_suggestions
+  topics:
+    course-events: course.events
+  ranking:
+    rating-weight: 0.4
+    popularity-weight: 0.4
+    recency-weight: 0.2
+    recency-scale-days: 90
+  autocomplete:
+    max-suggestions: 8
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    org.springframework.data.elasticsearch.core: INFO
+    co.elastic.clients: WARN
+    org.springframework.kafka: WARN
+    com.netflix.discovery: ERROR
+    com.netflix.eureka: ERROR
+    org.springframework.cloud.netflix.eureka: WARN
+    org.springframework.cloud.loadbalancer: WARN
