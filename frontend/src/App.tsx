@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import CreateCoursePage from './pages/CreateCoursePage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import CoursePlayerPage from './features/course-player/CoursePlayerPage';
 
 export default function App() {
@@ -44,6 +45,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CoursePlayerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager"
+            element={
+              <ProtectedRoute>
+                <ManagerDashboardPage />
               </ProtectedRoute>
             }
           />

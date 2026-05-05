@@ -97,6 +97,54 @@ export interface DraftResponse {
   reviewedAt: string | null;
 }
 
+export interface LessonOverview {
+  lessonId: string;
+  title: string;
+  lessonType: string;
+  videoUrl: string | null;
+  textUrl: string | null;
+  durationMinutes: number | null;
+  isPreview: boolean | null;
+}
+
+export interface SectionOverview {
+  sectionId: string;
+  title: string;
+  lessons: LessonOverview[];
+}
+
+export interface CourseOverview {
+  id: string;
+  instructorId: string;
+  title: string;
+  subTitle: string | null;
+  description: string | null;
+  price: number | null;
+  isFree: boolean | null;
+  language: string | null;
+  couponCode: string | null;
+  rating: number | null;
+  courseDurationMinutes: number | null;
+  level: string | null;
+  status: string;
+  source: 'REDIS' | 'POSTGRES';
+  rejectionFeedback: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  sections: SectionOverview[];
+}
+
+export const listAllCourses = () =>
+  client.get<{ data: CourseOverview[] }>('/courses/manager/all');
+
+export const approveDraft = (draftId: string) =>
+  client.post<{ data: unknown }>(`/courses/manager/${draftId}/approve`);
+
+export const rejectDraft = (draftId: string, feedback: string) =>
+  client.post<{ data: DraftResponse }>(`/courses/manager/${draftId}/reject`, { feedback });
+
 export const createCourse = (data: CreateCourseRequest) =>
   client.post<{ data: DraftResponse }>('/courses', data);
 

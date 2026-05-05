@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import type { CourseResponse } from '../api/courses';
 import { listCourses } from '../api/courses';
 
+
 export default function DashboardPage() {
-  const { user, logout, isInstructor } = useAuth();
+  const { user, logout, isInstructor, isManager, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<CourseResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +95,13 @@ export default function DashboardPage() {
           <div className="welcome-box">
             <h2>Welcome, {user?.email}</h2>
             <p className="muted">You're signed in as a <strong>{user?.role}</strong>.</p>
+            {(isManager || isAdmin) && (
+              <div style={{ marginTop: 20 }}>
+                <Link to="/manager" className="btn-primary" style={{ display: 'inline-block', padding: '8px 20px' }}>
+                  Open Course Review Dashboard
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </main>

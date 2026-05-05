@@ -76,6 +76,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/api/auth/")) return true;
         if (HttpMethod.GET.equals(method) && path.startsWith("/api/courses/categories")) return true;
         if (HttpMethod.GET.equals(method) && path.startsWith("/api/courses/subcategories")) return true;
+        if (HttpMethod.GET.equals(method) && path.startsWith("/api/content/files/")) return true;
+        if (HttpMethod.GET.equals(method) && path.startsWith("/api/content/") && path.endsWith("/stream")) return true;
 
         return false;
     }

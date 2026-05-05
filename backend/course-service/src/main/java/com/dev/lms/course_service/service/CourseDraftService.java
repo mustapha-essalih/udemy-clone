@@ -176,8 +176,17 @@ public class CourseDraftService {
         CourseDraft draft = fetch(draftId);
 
         if (draft.getStatus() != DraftStatus.PENDING_REVIEW) {
-            throw new BusinessException("Only PENDING_REVIEW courses can be approved");
+            throw new BusinessException("Draft '" + draftId + "' has status " + draft.getStatus()
+                    + " — only PENDING_REVIEW drafts can be approved");
         }
+
+        CourseLevel level;
+        try {
+            level = draft.getLevel() != null ? CourseLevel.valueOf(draft.getLevel()) : CourseLevel.ALL_LEVELS;
+        } catch (IllegalArgumentException e) {
+            level = CourseLevel.ALL_LEVELS;
+        }
+        final CourseLevel resolvedLevel = level;
 
         CourseResponse response = transactionTemplate.execute(status -> {
             Course course = Course.builder()
@@ -190,7 +199,7 @@ public class CourseDraftService {
                     .language(draft.getLanguage())
                     .couponCode(draft.getCouponCode())
                     .courseDurationMinutes(draft.getCourseDurationMinutes())
-                    .level(draft.getLevel() != null ? CourseLevel.valueOf(draft.getLevel()) : CourseLevel.ALL_LEVELS)
+                    .level(resolvedLevel)
                     .status(CourseStatus.PUBLISHED)
                     .build();
 
@@ -243,6 +252,10 @@ public class CourseDraftService {
                     saved.getStatus().name(), saved.getLevel().name(), sectionResponses, saved.getCreatedAt());
         });
 
+        if (response == null) {
+            throw new BusinessException("Approval transaction produced no result for draft: " + draftId);
+        }
+
         redis.delete(DRAFT_KEY_PREFIX + draftId);
         redis.opsForSet().remove(PENDING_INDEX_KEY, draftId);
         redis.opsForSet().remove(INSTRUCTOR_INDEX_PREFIX + draft.getInstructorId().toString(), draftId);
@@ -254,7 +267,8 @@ public class CourseDraftService {
         CourseDraft draft = fetch(draftId);
 
         if (draft.getStatus() != DraftStatus.PENDING_REVIEW) {
-            throw new BusinessException("Only PENDING_REVIEW courses can be rejected");
+            throw new BusinessException("Draft '" + draftId + "' has status " + draft.getStatus()
+                    + " — only PENDING_REVIEW drafts can be rejected");
         }
 
         draft.setStatus(DraftStatus.REJECTED);
@@ -300,9 +314,75 @@ public class CourseDraftService {
         return toResponse(draft);
     }
 
+    public List<CourseOverviewResponse> listAllDrafts(String role, UUID instructorId) {
+        if (role.equals("ADMIN") || role.equals("MANAGER")) {
+            return scanAllDrafts();
+        }
+        return listDraftsByInstructor(instructorId);
+    }
+
+    private List<CourseOverviewResponse> scanAllDrafts() {
+        Set<String> keys = redis.keys(DRAFT_KEY_PREFIX + "*");
+        if (keys == null || keys.isEmpty()) return List.of();
+        List<CourseOverviewResponse> result = new ArrayList<>();
+        for (String key : keys) {
+            String json = redis.opsForValue().get(key);
+            if (json != null) {
+                result.add(toOverviewFromDraft(deserialize(json)));
+            }
+        }
+        return result;
+    }
+
+    private List<CourseOverviewResponse> listDraftsByInstructor(UUID instructorId) {
+        String indexKey = INSTRUCTOR_INDEX_PREFIX + instructorId;
+        Set<String> draftIds = redis.opsForSet().members(indexKey);
+        if (draftIds == null || draftIds.isEmpty()) return List.of();
+
+        List<CourseOverviewResponse> result = new ArrayList<>();
+        List<String> stale = new ArrayList<>();
+
+        for (String id : draftIds) {
+            String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + id);
+            if (json == null) {
+                stale.add(id);
+                continue;
+            }
+            result.add(toOverviewFromDraft(deserialize(json)));
+        }
+
+        if (!stale.isEmpty()) {
+            redis.opsForSet().remove(indexKey, stale.toArray(new Object[0]));
+        }
+        return result;
+    }
+
+    private CourseOverviewResponse toOverviewFromDraft(CourseDraft d) {
+        List<SectionOverviewResponse> sections = d.getSections() == null ? List.of() :
+                d.getSections().stream()
+                        .map(s -> new SectionOverviewResponse(
+                                s.getSectionId(),
+                                s.getTitle(),
+                                s.getLessons() == null ? List.of() : s.getLessons().stream()
+                                        .map(l -> new LessonOverviewResponse(
+                                                l.getLessonId(), l.getTitle(), l.getLessonType(),
+                                                l.getVideoUrl(), l.getTextUrl(),
+                                                l.getDurationMinutes(), l.getIsPreview()))
+                                        .toList()))
+                        .toList();
+        return new CourseOverviewResponse(
+                d.getDraftId(), d.getInstructorId(), d.getTitle(), d.getSubTitle(),
+                d.getDescription(), d.getPrice(), d.getIsFree(), d.getLanguage(),
+                d.getCouponCode(), null, d.getCourseDurationMinutes(), d.getLevel(),
+                d.getStatus().name(), "REDIS", d.getRejectionFeedback(),
+                d.getCreatedAt(), d.getUpdatedAt(), d.getSubmittedAt(), d.getReviewedAt(),
+                sections);
+    }
+
     private CourseDraft fetch(String draftId) {
         String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + draftId);
-        if (json == null) throw new ResourceNotFoundException("CourseDraft", draftId);
+        if (json == null) throw new ResourceNotFoundException(
+                "Draft not found: '" + draftId + "'. It may have already been approved or expired.");
         return deserialize(json);
     }
 

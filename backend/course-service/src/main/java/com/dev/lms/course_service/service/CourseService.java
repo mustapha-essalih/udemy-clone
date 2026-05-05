@@ -92,6 +92,42 @@ public class CourseService {
                 .toList();
     }
 
+    public List<CourseOverviewResponse> listAllAsOverview(String role, UUID instructorId) {
+        List<Course> courses = (role.equals("ADMIN") || role.equals("MANAGER"))
+                ? courseRepository.findAll()
+                : courseRepository.findByInstructorId(instructorId);
+        return courses.stream().map(this::toOverviewFromCourse).toList();
+    }
+
+    private CourseOverviewResponse toOverviewFromCourse(Course c) {
+        List<SectionOverviewResponse> sections = sectionRepository.findByCourseId(c.getCourseId()).stream()
+                .map(s -> {
+                    List<LessonOverviewResponse> lessons = lessonRepository
+                            .findBySectionId(s.getSectionId()).stream()
+                            .map(l -> {
+                                VideoContent vc = videoContentRepository
+                                        .findByLessonId(l.getLessonId()).orElse(null);
+                                return new LessonOverviewResponse(
+                                        l.getLessonId().toString(), l.getTitle(),
+                                        l.getLessonType().name(),
+                                        vc != null ? vc.getVideoUrl() : null,
+                                        l.getTextUrl(),
+                                        vc != null ? vc.getDurationMinutes() : null,
+                                        vc != null ? vc.getIsPreview() : null);
+                            })
+                            .toList();
+                    return new SectionOverviewResponse(s.getSectionId().toString(), s.getTitle(), lessons);
+                })
+                .toList();
+        return new CourseOverviewResponse(
+                c.getCourseId().toString(), c.getInstructorId(), c.getTitle(), c.getSubTitle(),
+                c.getDescription(), c.getPrice(), c.getIsFree(), c.getLanguage(),
+                c.getCouponCode(), c.getRating(), c.getCourseDurationMinutes(), c.getLevel().name(),
+                c.getStatus().name(), "POSTGRES", null,
+                c.getCreatedAt(), null, null, null,
+                sections);
+    }
+
     private CourseResponse toCourseResponse(Course c, List<SectionResponse> sections) {
         return new CourseResponse(
                 c.getCourseId(), c.getInstructorId(), c.getTitle(), c.getSubTitle(),

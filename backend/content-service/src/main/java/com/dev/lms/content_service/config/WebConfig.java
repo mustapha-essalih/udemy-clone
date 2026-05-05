@@ -3,6 +3,7 @@ package com.dev.lms.content_service.config;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.config.CorsRegistry;
 import org.springframework.web.reactive.config.ResourceHandlerRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 
@@ -26,5 +27,17 @@ public class WebConfig implements WebFluxConfigurer {
         String location = "file:" + Paths.get(basePath).toAbsolutePath() + "/";
         registry.addResourceHandler("/api/content/files/**")
                 .addResourceLocations(location);
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/content/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "HEAD", "OPTIONS")
+                .allowedHeaders("*")
+                .exposedHeaders(
+                        "Content-Type", "Content-Length",
+                        "Content-Range", "Accept-Ranges",
+                        "Content-Disposition");
     }
 }
