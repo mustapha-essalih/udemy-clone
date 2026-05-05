@@ -1,9 +1,10 @@
 package com.dev.lms.auth_service.mapper;
 
 import com.dev.lms.auth_service.dto.AuthResponse;
-import com.dev.lms.auth_service.dto.RegisterRequest;
-import com.dev.lms.auth_service.dto.RegistrationResponse;
 import com.dev.lms.auth_service.entity.User;
+import com.dev.lms.common.request.RegisterRequest;
+import com.dev.lms.common.response.RegistrationResponse;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

@@ -1,20 +1,23 @@
 package com.dev.lms.auth_service.controller;
 
-import com.dev.lms.auth_service.dto.AuthResponse;
-import com.dev.lms.auth_service.dto.LoginRequest;
-import com.dev.lms.auth_service.dto.RefreshTokenRequest;
-import com.dev.lms.auth_service.dto.RegisterRequest;
-import com.dev.lms.auth_service.dto.RegistrationResponse;
-import com.dev.lms.auth_service.service.AuthService;
-import com.dev.lms.common.response.ApiResponse;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.dev.lms.auth_service.dto.AuthResponse;
+import com.dev.lms.auth_service.dto.LoginRequest;
+import com.dev.lms.auth_service.dto.RefreshTokenRequest;
+import com.dev.lms.auth_service.service.AuthService;
+import com.dev.lms.common.request.RegisterRequest;
+import com.dev.lms.common.response.ApiResponse;
+import com.dev.lms.common.response.RegistrationResponse;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,7 +33,9 @@ public class AuthController {
     }
 
     @PostMapping("/register-manager")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<RegistrationResponse>> registerManager(@Valid @RequestBody RegisterRequest request) {
+        
         RegistrationResponse response = authService.registerManager(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Manager registered successfully", response));
     }

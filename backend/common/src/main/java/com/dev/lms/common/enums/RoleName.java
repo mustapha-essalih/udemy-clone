@@ -1,4 +1,4 @@
-package com.dev.lms.auth_service.entity;
+package com.dev.lms.common.enums;
 
 public enum RoleName {
     STUDENT, INSTRUCTOR, ADMIN, MANAGER

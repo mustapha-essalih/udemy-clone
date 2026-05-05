@@ -1,23 +1,9 @@
 package com.dev.lms.auth_service.service;
 
-import com.dev.lms.auth_service.dto.AuthResponse;
-import com.dev.lms.auth_service.dto.LoginRequest;
-import com.dev.lms.auth_service.dto.RefreshTokenRequest;
-import com.dev.lms.auth_service.dto.RegisterRequest;
-import com.dev.lms.auth_service.dto.RegistrationResponse;
-import com.dev.lms.auth_service.entity.RefreshToken;
-import com.dev.lms.auth_service.entity.Role;
-import com.dev.lms.auth_service.entity.RoleName;
-import com.dev.lms.auth_service.entity.User;
-import com.dev.lms.auth_service.entity.UserStatus;
-import com.dev.lms.auth_service.exception.ConflictException;
-import com.dev.lms.auth_service.exception.ForbiddenException;
-import com.dev.lms.auth_service.exception.UnauthorizedException;
-import com.dev.lms.auth_service.mapper.UserMapper;
-import com.dev.lms.auth_service.repository.RefreshTokenRepository;
-import com.dev.lms.auth_service.repository.RoleRepository;
-import com.dev.lms.auth_service.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,9 +13,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.UUID;
+import com.dev.lms.auth_service.dto.AuthResponse;
+import com.dev.lms.auth_service.dto.LoginRequest;
+import com.dev.lms.auth_service.dto.RefreshTokenRequest;
+import com.dev.lms.auth_service.entity.RefreshToken;
+import com.dev.lms.auth_service.entity.Role;
+import com.dev.lms.auth_service.entity.User;
+import com.dev.lms.auth_service.entity.UserStatus;
+import com.dev.lms.auth_service.exception.ConflictException;
+import com.dev.lms.auth_service.exception.ForbiddenException;
+import com.dev.lms.auth_service.exception.ResourceNotFoundException;
+import com.dev.lms.auth_service.exception.UnauthorizedException;
+import com.dev.lms.auth_service.mapper.UserMapper;
+import com.dev.lms.auth_service.repository.RefreshTokenRepository;
+import com.dev.lms.auth_service.repository.RoleRepository;
+import com.dev.lms.auth_service.repository.UserRepository;
+import com.dev.lms.common.enums.RoleName;
+import com.dev.lms.common.request.RegisterRequest;
+import com.dev.lms.common.response.RegistrationResponse;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -77,9 +80,9 @@ public class AuthService {
 
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
     public RegistrationResponse registerManager(RegisterRequest request) {
+        
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already in use");
         }
@@ -90,9 +93,14 @@ public class AuthService {
         User user = userMapper.toEntity(request);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setStatus(UserStatus.ACTIVE);
+        
+        Role roleEntity = roleRepository.findByName(RoleName.MANAGER)
+    .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+
         user.setRoles(new HashSet<>());
-        user.getRoles().add(Role.builder().name(RoleName.MANAGER).build());
+        user.getRoles().add(roleEntity);
         User saved = userRepository.save(user);
+        
         return buildRegistrationResponse(saved);
     }
 

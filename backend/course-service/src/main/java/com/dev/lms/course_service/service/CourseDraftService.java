@@ -1,0 +1,343 @@
+package com.dev.lms.course_service.service;
+
+import com.dev.lms.course_service.draft.CourseDraft;
+import com.dev.lms.course_service.draft.DraftStatus;
+import com.dev.lms.course_service.draft.LessonDraft;
+import com.dev.lms.course_service.draft.SectionDraft;
+import com.dev.lms.course_service.dto.*;
+import com.dev.lms.course_service.entity.*;
+import com.dev.lms.course_service.exception.BusinessException;
+import com.dev.lms.course_service.exception.ResourceNotFoundException;
+import com.dev.lms.course_service.repository.*;
+import tools.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+@RequiredArgsConstructor
+public class CourseDraftService {
+
+    private static final String DRAFT_KEY_PREFIX = "course:draft:";
+    private static final String INSTRUCTOR_INDEX_PREFIX = "course:drafts:instructor:";
+    private static final String PENDING_INDEX_KEY = "course:drafts:pending";
+    private static final Duration DRAFT_TTL = Duration.ofDays(30);
+
+    private final StringRedisTemplate redis;
+    private final ObjectMapper objectMapper;
+    private final CourseRepository courseRepository;
+    private final SectionRepository sectionRepository;
+    private final LessonRepository lessonRepository;
+    private final VideoContentRepository videoContentRepository;
+    private final TransactionTemplate transactionTemplate;
+
+    public DraftResponse create(UUID instructorId, CreateDraftRequest req) {
+        String draftId = UUID.randomUUID().toString();
+        CourseDraft draft = CourseDraft.builder()
+                .draftId(draftId)
+                .instructorId(instructorId)
+                .title(req.title())
+                .subTitle(req.subTitle())
+                .description(req.description())
+                .price(req.price())
+                .isFree(req.isFree() != null ? req.isFree() : false)
+                .language(req.language())
+                .couponCode(req.couponCode())
+                .courseDurationMinutes(req.courseDurationMinutes())
+                .level(req.level() != null ? req.level().name() : CourseLevel.ALL_LEVELS.name())
+                .sections(toSectionDrafts(req.sections()))
+                .status(DraftStatus.DRAFT)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        persist(draft);
+        addToInstructorIndex(instructorId.toString(), draftId);
+        return toResponse(draft);
+    }
+
+    public DraftResponse getById(String draftId) {
+        return toResponse(fetch(draftId));
+    }
+
+    public List<DraftResponse> listByInstructor(UUID instructorId) {
+        String indexKey = INSTRUCTOR_INDEX_PREFIX + instructorId;
+        Set<String> draftIds = redis.opsForSet().members(indexKey);
+        if (draftIds == null || draftIds.isEmpty()) return List.of();
+
+        List<DraftResponse> result = new ArrayList<>();
+        List<String> stale = new ArrayList<>();
+
+        for (String id : draftIds) {
+            String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + id);
+            if (json == null) {
+                stale.add(id);
+                continue;
+            }
+            result.add(toResponse(deserialize(json)));
+        }
+
+        if (!stale.isEmpty()) {
+            redis.opsForSet().remove(indexKey, stale.toArray(new Object[0]));
+        }
+        return result;
+    }
+
+    public List<DraftResponse> listPending() {
+        Set<String> draftIds = redis.opsForSet().members(PENDING_INDEX_KEY);
+        if (draftIds == null || draftIds.isEmpty()) return List.of();
+
+        List<DraftResponse> result = new ArrayList<>();
+        List<String> stale = new ArrayList<>();
+
+        for (String id : draftIds) {
+            String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + id);
+            if (json == null) {
+                stale.add(id);
+                continue;
+            }
+            CourseDraft draft = deserialize(json);
+            if (draft.getStatus() == DraftStatus.PENDING_REVIEW) {
+                result.add(toResponse(draft));
+            } else {
+                stale.add(id);
+            }
+        }
+
+        if (!stale.isEmpty()) {
+            redis.opsForSet().remove(PENDING_INDEX_KEY, stale.toArray(new Object[0]));
+        }
+        return result;
+    }
+
+    public DraftResponse update(String draftId, UUID instructorId, UpdateDraftRequest req) {
+        CourseDraft draft = fetch(draftId);
+
+        if (!draft.getInstructorId().equals(instructorId)) {
+            throw new BusinessException("Not authorized to update this draft");
+        }
+        if (draft.getStatus() != DraftStatus.DRAFT && draft.getStatus() != DraftStatus.REJECTED) {
+            throw new BusinessException("Only DRAFT or REJECTED courses can be updated");
+        }
+
+        if (req.title() != null) draft.setTitle(req.title());
+        if (req.subTitle() != null) draft.setSubTitle(req.subTitle());
+        if (req.description() != null) draft.setDescription(req.description());
+        if (req.price() != null) draft.setPrice(req.price());
+        if (req.isFree() != null) draft.setIsFree(req.isFree());
+        if (req.language() != null) draft.setLanguage(req.language());
+        if (req.couponCode() != null) draft.setCouponCode(req.couponCode());
+        if (req.courseDurationMinutes() != null) draft.setCourseDurationMinutes(req.courseDurationMinutes());
+        if (req.level() != null) draft.setLevel(req.level().name());
+        if (req.sections() != null) draft.setSections(toSectionDrafts(req.sections()));
+        draft.setUpdatedAt(LocalDateTime.now());
+
+        if (draft.getStatus() == DraftStatus.REJECTED) {
+            draft.setStatus(DraftStatus.DRAFT);
+            draft.setRejectionFeedback(null);
+        }
+
+        persist(draft);
+        return toResponse(draft);
+    }
+
+    public DraftResponse submit(String draftId, UUID instructorId) {
+        CourseDraft draft = fetch(draftId);
+
+        if (!draft.getInstructorId().equals(instructorId)) {
+            throw new BusinessException("Not authorized to submit this draft");
+        }
+        if (draft.getStatus() != DraftStatus.DRAFT) {
+            throw new BusinessException("Only DRAFT courses can be submitted for review");
+        }
+
+        draft.setStatus(DraftStatus.PENDING_REVIEW);
+        draft.setSubmittedAt(LocalDateTime.now());
+        draft.setUpdatedAt(LocalDateTime.now());
+
+        persist(draft);
+        redis.opsForSet().add(PENDING_INDEX_KEY, draftId);
+
+        return toResponse(draft);
+    }
+
+    public CourseResponse approve(String draftId) {
+        CourseDraft draft = fetch(draftId);
+
+        if (draft.getStatus() != DraftStatus.PENDING_REVIEW) {
+            throw new BusinessException("Only PENDING_REVIEW courses can be approved");
+        }
+
+        CourseResponse response = transactionTemplate.execute(status -> {
+            Course course = Course.builder()
+                    .instructorId(draft.getInstructorId())
+                    .title(draft.getTitle())
+                    .subTitle(draft.getSubTitle())
+                    .description(draft.getDescription())
+                    .price(draft.getPrice())
+                    .isFree(draft.getIsFree() != null ? draft.getIsFree() : false)
+                    .language(draft.getLanguage())
+                    .couponCode(draft.getCouponCode())
+                    .courseDurationMinutes(draft.getCourseDurationMinutes())
+                    .level(draft.getLevel() != null ? CourseLevel.valueOf(draft.getLevel()) : CourseLevel.ALL_LEVELS)
+                    .status(CourseStatus.PUBLISHED)
+                    .build();
+
+            Course saved = courseRepository.save(course);
+
+            List<SectionResponse> sectionResponses = new ArrayList<>();
+            for (SectionDraft sd : draft.getSections()) {
+                UUID presetSectionId = sd.getSectionId() != null
+                        ? UUID.fromString(sd.getSectionId()) : null;
+                Section section = sectionRepository.save(
+                        Section.builder()
+                                .sectionId(presetSectionId)
+                                .courseId(saved.getCourseId())
+                                .title(sd.getTitle())
+                                .build());
+
+                List<LessonResponse> lessonResponses = new ArrayList<>();
+                for (LessonDraft ld : sd.getLessons()) {
+                    UUID presetLessonId = ld.getLessonId() != null
+                            ? UUID.fromString(ld.getLessonId()) : null;
+                    Lesson lesson = lessonRepository.save(
+                            Lesson.builder()
+                                    .lessonId(presetLessonId)
+                                    .sectionId(section.getSectionId())
+                                    .title(ld.getTitle())
+                                    .lessonType(LessonType.valueOf(ld.getLessonType()))
+                                    .textUrl(ld.getTextUrl())
+                                    .build());
+                    if (ld.getVideoUrl() != null) {
+                        videoContentRepository.save(VideoContent.builder()
+                                .lessonId(lesson.getLessonId())
+                                .videoUrl(ld.getVideoUrl())
+                                .durationMinutes(ld.getDurationMinutes())
+                                .isPreview(ld.getIsPreview() != null ? ld.getIsPreview() : false)
+                                .build());
+                    }
+                    lessonResponses.add(new LessonResponse(
+                            lesson.getLessonId(), lesson.getSectionId(), lesson.getTitle(),
+                            lesson.getLessonType().name(), ld.getVideoUrl(), ld.getTextUrl(),
+                            ld.getDurationMinutes(), ld.getIsPreview(), lesson.getCreatedAt()));
+                }
+                sectionResponses.add(new SectionResponse(
+                        section.getSectionId(), section.getCourseId(), section.getTitle(), lessonResponses));
+            }
+
+            return new CourseResponse(
+                    saved.getCourseId(), saved.getInstructorId(), saved.getTitle(), saved.getSubTitle(),
+                    saved.getDescription(), saved.getPrice(), saved.getIsFree(), saved.getLanguage(),
+                    saved.getCouponCode(), saved.getRating(), saved.getCourseDurationMinutes(),
+                    saved.getStatus().name(), saved.getLevel().name(), sectionResponses, saved.getCreatedAt());
+        });
+
+        redis.delete(DRAFT_KEY_PREFIX + draftId);
+        redis.opsForSet().remove(PENDING_INDEX_KEY, draftId);
+        redis.opsForSet().remove(INSTRUCTOR_INDEX_PREFIX + draft.getInstructorId().toString(), draftId);
+
+        return response;
+    }
+
+    public DraftResponse reject(String draftId, String feedback) {
+        CourseDraft draft = fetch(draftId);
+
+        if (draft.getStatus() != DraftStatus.PENDING_REVIEW) {
+            throw new BusinessException("Only PENDING_REVIEW courses can be rejected");
+        }
+
+        draft.setStatus(DraftStatus.REJECTED);
+        draft.setRejectionFeedback(feedback);
+        draft.setReviewedAt(LocalDateTime.now());
+        draft.setUpdatedAt(LocalDateTime.now());
+
+        persist(draft);
+        redis.opsForSet().remove(PENDING_INDEX_KEY, draftId);
+
+        return toResponse(draft);
+    }
+
+    public DraftResponse updateLessonVideoUrl(String draftId, String sectionId, String lessonId,
+            UpdateVideoContentRequest req) {
+        CourseDraft draft = fetch(draftId);
+        draft.getSections().stream()
+                .filter(s -> sectionId.equals(s.getSectionId()))
+                .flatMap(s -> s.getLessons().stream())
+                .filter(l -> lessonId.equals(l.getLessonId()))
+                .findFirst()
+                .ifPresent(l -> {
+                    l.setVideoUrl(req.videoUrl());
+                    l.setDurationMinutes(req.durationMinutes());
+                    l.setIsPreview(req.isPreview());
+                });
+        draft.setUpdatedAt(LocalDateTime.now());
+        persist(draft);
+        return toResponse(draft);
+    }
+
+    public DraftResponse updateLessonTextUrl(String draftId, String sectionId, String lessonId,
+            UpdateTextContentRequest req) {
+        CourseDraft draft = fetch(draftId);
+        draft.getSections().stream()
+                .filter(s -> sectionId.equals(s.getSectionId()))
+                .flatMap(s -> s.getLessons().stream())
+                .filter(l -> lessonId.equals(l.getLessonId()))
+                .findFirst()
+                .ifPresent(l -> l.setTextUrl(req.contentUrl()));
+        draft.setUpdatedAt(LocalDateTime.now());
+        persist(draft);
+        return toResponse(draft);
+    }
+
+    private CourseDraft fetch(String draftId) {
+        String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + draftId);
+        if (json == null) throw new ResourceNotFoundException("CourseDraft", draftId);
+        return deserialize(json);
+    }
+
+    private void persist(CourseDraft draft) {
+        redis.opsForValue().set(DRAFT_KEY_PREFIX + draft.getDraftId(),
+                objectMapper.writeValueAsString(draft), DRAFT_TTL);
+    }
+
+    private void addToInstructorIndex(String instructorId, String draftId) {
+        String indexKey = INSTRUCTOR_INDEX_PREFIX + instructorId;
+        redis.opsForSet().add(indexKey, draftId);
+        redis.expire(indexKey, DRAFT_TTL);
+    }
+
+    private CourseDraft deserialize(String json) {
+        return objectMapper.readValue(json, CourseDraft.class);
+    }
+
+    private List<SectionDraft> toSectionDrafts(List<CreateSectionRequest> sections) {
+        if (sections == null) return List.of();
+        return sections.stream()
+                .map(s -> SectionDraft.builder()
+                        .sectionId(UUID.randomUUID().toString())
+                        .title(s.title())
+                        .lessons(s.lessons().stream()
+                                .map(l -> LessonDraft.builder()
+                                        .lessonId(UUID.randomUUID().toString())
+                                        .title(l.title())
+                                        .lessonType(l.lessonType().name())
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
+    }
+
+    private DraftResponse toResponse(CourseDraft d) {
+        return new DraftResponse(
+                d.getDraftId(), d.getInstructorId(), d.getTitle(), d.getSubTitle(),
+                d.getDescription(), d.getPrice(), d.getIsFree(), d.getLanguage(),
+                d.getCouponCode(), d.getCourseDurationMinutes(), d.getLevel(),
+                d.getSections(), d.getStatus().name(), d.getRejectionFeedback(),
+                d.getCreatedAt(), d.getUpdatedAt(), d.getSubmittedAt(), d.getReviewedAt());
+    }
+}

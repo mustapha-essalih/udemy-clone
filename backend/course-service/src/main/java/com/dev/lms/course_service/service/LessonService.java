@@ -10,8 +10,6 @@ import com.dev.lms.course_service.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 
@@ -24,9 +22,9 @@ public class LessonService {
     private final VideoContentRepository videoContentRepository;
     private final TransactionTemplate transactionTemplate;
 
-    public Mono<LessonResponse> updateVideoContent(UUID courseId, UUID sectionId, UUID lessonId,
-                                                    UpdateVideoContentRequest req) {
-        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+    public LessonResponse updateVideoContent(UUID courseId, UUID sectionId, UUID lessonId,
+                                              UpdateVideoContentRequest req) {
+        return transactionTemplate.execute(status -> {
             Section section = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Section", sectionId));
             if (!section.getCourseId().equals(courseId)) {
@@ -55,12 +53,12 @@ public class LessonService {
                     lesson.getLessonType().name(), saved.getVideoUrl(), null,
                     saved.getDurationMinutes(), saved.getIsPreview(), lesson.getCreatedAt()
             );
-        })).subscribeOn(Schedulers.boundedElastic());
+        });
     }
 
-    public Mono<LessonResponse> updateTextContent(UUID courseId, UUID sectionId, UUID lessonId,
-                                                   UpdateTextContentRequest req) {
-        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+    public LessonResponse updateTextContent(UUID courseId, UUID sectionId, UUID lessonId,
+                                             UpdateTextContentRequest req) {
+        return transactionTemplate.execute(status -> {
             Section section = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Section", sectionId));
             if (!section.getCourseId().equals(courseId)) {
@@ -84,6 +82,6 @@ public class LessonService {
                     saved.getLessonType().name(), null, saved.getTextUrl(),
                     null, null, saved.getCreatedAt()
             );
-        })).subscribeOn(Schedulers.boundedElastic());
+        });
     }
 }

@@ -1,6 +1,7 @@
 package com.dev.lms.admin_service.client;
 
 import com.dev.lms.admin_service.dto.CategoryDto;
+import com.dev.lms.admin_service.dto.CourseDraftDto;
 import com.dev.lms.admin_service.dto.SubCategoryDto;
 import com.dev.lms.common.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,13 +26,17 @@ public class CourseServiceClient {
         this.currentRequest = currentRequest;
     }
 
-    private String authHeader() {
-        return currentRequest.getHeader(HttpHeaders.AUTHORIZATION);
+    private void propagateUserHeaders(HttpHeaders headers) {
+        String role = currentRequest.getHeader("X-User-Role");
+        String userId = currentRequest.getHeader("X-User-Id");
+        String email = currentRequest.getHeader("X-User-Email");
+        if (role != null) headers.set("X-User-Role", role);
+        if (userId != null) headers.set("X-User-Id", userId);
+        if (email != null) headers.set("X-User-Email", email);
     }
 
     public List<CategoryDto> getAllCategories() {
-        return webClient
-                .get()
+        return webClient.get()
                 .uri("lb://course-service/api/courses/categories")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<CategoryDto>>>() {})
@@ -40,8 +45,7 @@ public class CourseServiceClient {
     }
 
     public CategoryDto getCategoryById(UUID id) {
-        return webClient
-                .get()
+        return webClient.get()
                 .uri("lb://course-service/api/courses/categories/{id}", id)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<CategoryDto>>() {})
@@ -50,10 +54,9 @@ public class CourseServiceClient {
     }
 
     public CategoryDto createCategory(String name) {
-        return webClient
-                .post()
+        return webClient.post()
                 .uri("lb://course-service/api/courses/categories")
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .bodyValue(new CreateCategoryRequest(name))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<CategoryDto>>() {})
@@ -62,10 +65,9 @@ public class CourseServiceClient {
     }
 
     public CategoryDto updateCategory(UUID id, String name) {
-        return webClient
-                .put()
+        return webClient.put()
                 .uri("lb://course-service/api/courses/categories/{id}", id)
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .bodyValue(new UpdateCategoryRequest(name))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<CategoryDto>>() {})
@@ -74,18 +76,16 @@ public class CourseServiceClient {
     }
 
     public void deleteCategory(UUID id) {
-        webClient
-                .delete()
+        webClient.delete()
                 .uri("lb://course-service/api/courses/categories/{id}", id)
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();
     }
 
     public List<SubCategoryDto> getAllSubCategories() {
-        return webClient
-                .get()
+        return webClient.get()
                 .uri("lb://course-service/api/courses/subcategories")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<SubCategoryDto>>>() {})
@@ -94,8 +94,7 @@ public class CourseServiceClient {
     }
 
     public SubCategoryDto getSubCategoryById(UUID id) {
-        return webClient
-                .get()
+        return webClient.get()
                 .uri("lb://course-service/api/courses/subcategories/{id}", id)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<SubCategoryDto>>() {})
@@ -104,8 +103,7 @@ public class CourseServiceClient {
     }
 
     public List<SubCategoryDto> getSubCategoriesByCategoryId(UUID categoryId) {
-        return webClient
-                .get()
+        return webClient.get()
                 .uri("lb://course-service/api/courses/subcategories/category/{categoryId}", categoryId)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<SubCategoryDto>>>() {})
@@ -114,10 +112,9 @@ public class CourseServiceClient {
     }
 
     public SubCategoryDto createSubCategory(String name, UUID categoryId) {
-        return webClient
-                .post()
+        return webClient.post()
                 .uri("lb://course-service/api/courses/subcategories")
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .bodyValue(new CreateSubCategoryRequest(name, categoryId))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<SubCategoryDto>>() {})
@@ -126,10 +123,9 @@ public class CourseServiceClient {
     }
 
     public SubCategoryDto updateSubCategory(UUID id, String name) {
-        return webClient
-                .put()
+        return webClient.put()
                 .uri("lb://course-service/api/courses/subcategories/{id}", id)
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .bodyValue(new UpdateSubCategoryRequest(name))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ApiResponse<SubCategoryDto>>() {})
@@ -138,12 +134,52 @@ public class CourseServiceClient {
     }
 
     public void deleteSubCategory(UUID id) {
-        webClient
-                .delete()
+        webClient.delete()
                 .uri("lb://course-service/api/courses/subcategories/{id}", id)
-                .header(HttpHeaders.AUTHORIZATION, authHeader())
+                .headers(this::propagateUserHeaders)
                 .retrieve()
                 .bodyToMono(Void.class)
+                .block();
+    }
+
+    public List<CourseDraftDto> getPendingDrafts() {
+        return webClient.get()
+                .uri("lb://course-service/api/courses/drafts/pending")
+                .headers(this::propagateUserHeaders)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<List<CourseDraftDto>>>() {})
+                .map(ApiResponse::data)
+                .block();
+    }
+
+    public CourseDraftDto getDraft(String draftId) {
+        return webClient.get()
+                .uri("lb://course-service/api/courses/drafts/{draftId}", draftId)
+                .headers(this::propagateUserHeaders)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<CourseDraftDto>>() {})
+                .map(ApiResponse::data)
+                .block();
+    }
+
+    public Object approveDraft(String draftId) {
+        return webClient.post()
+                .uri("lb://course-service/api/courses/drafts/{draftId}/approve", draftId)
+                .headers(this::propagateUserHeaders)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<Object>>() {})
+                .map(ApiResponse::data)
+                .block();
+    }
+
+    public CourseDraftDto rejectDraft(String draftId, String feedback) {
+        return webClient.post()
+                .uri("lb://course-service/api/courses/drafts/{draftId}/reject", draftId)
+                .headers(this::propagateUserHeaders)
+                .bodyValue(new RejectRequest(feedback))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<CourseDraftDto>>() {})
+                .map(ApiResponse::data)
                 .block();
     }
 
@@ -151,4 +187,5 @@ public class CourseServiceClient {
     private record UpdateCategoryRequest(String name) {}
     private record CreateSubCategoryRequest(String name, UUID categoryId) {}
     private record UpdateSubCategoryRequest(String name) {}
+    private record RejectRequest(String feedback) {}
 }

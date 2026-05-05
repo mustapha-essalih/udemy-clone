@@ -48,7 +48,6 @@ export interface CreateSectionRequest {
 }
 
 export interface CreateCourseRequest {
-  instructorId: string;
   title: string;
   subTitle: string;
   description: string;
@@ -61,8 +60,45 @@ export interface CreateCourseRequest {
   sections: CreateSectionRequest[];
 }
 
+export interface DraftLessonResponse {
+  lessonId: string;
+  title: string;
+  lessonType: string;
+  videoUrl: string | null;
+  durationMinutes: number | null;
+  isPreview: boolean | null;
+  textUrl: string | null;
+}
+
+export interface DraftSectionResponse {
+  sectionId: string;
+  title: string;
+  lessons: DraftLessonResponse[];
+}
+
+export interface DraftResponse {
+  draftId: string;
+  instructorId: string;
+  title: string;
+  subTitle: string;
+  description: string;
+  price: number;
+  isFree: boolean;
+  language: string;
+  couponCode: string | null;
+  courseDurationMinutes: number;
+  level: string;
+  sections: DraftSectionResponse[];
+  status: string;
+  rejectionFeedback: string | null;
+  createdAt: string;
+  updatedAt: string;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+}
+
 export const createCourse = (data: CreateCourseRequest) =>
-  client.post<{ data: CourseResponse }>('/courses', data);
+  client.post<{ data: DraftResponse }>('/courses', data);
 
 export const getCourse = (id: string) =>
   client.get<{ data: CourseResponse }>(`/courses/${id}`);
@@ -89,5 +125,27 @@ export const updateTextUrl = (
 ) =>
   client.put<{ data: LessonResponse }>(
     `/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
+    data
+  );
+
+export const updateDraftVideoUrl = (
+  draftId: string,
+  sectionId: string,
+  lessonId: string,
+  data: { videoUrl: string; durationMinutes?: number; isPreview?: boolean }
+) =>
+  client.put<{ data: DraftResponse }>(
+    `/courses/drafts/${draftId}/sections/${sectionId}/lessons/${lessonId}/video-url`,
+    data
+  );
+
+export const updateDraftTextUrl = (
+  draftId: string,
+  sectionId: string,
+  lessonId: string,
+  data: { contentUrl: string }
+) =>
+  client.put<{ data: DraftResponse }>(
+    `/courses/drafts/${draftId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
     data
   );

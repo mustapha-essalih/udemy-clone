@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createCourse, updateVideoUrl, updateTextUrl } from '../api/courses';
-import type { SectionResponse, LessonResponse } from '../api/courses';
+import { createCourse, updateDraftVideoUrl, updateDraftTextUrl } from '../api/courses';
+import type { DraftSectionResponse, DraftLessonResponse } from '../api/courses';
 import { startUpload, uploadChunk, completeUpload, pauseUpload, resumeUpload, cancelUpload, CHUNK_SIZE } from '../api/content';
 import type { BasicInfo, DraftSection, UploadTarget, UploadState, ValidationErrors } from './create-course/types';
 import { LEVEL_MAP, LESSON_TYPE_MAP, validateBasicInfo } from './create-course/types';
@@ -239,7 +239,6 @@ export default function CreateCoursePage() {
     setCreateError('');
     try {
       const res = await createCourse({
-        instructorId: user!.userId,
         title: basicInfo.title,
         subTitle: basicInfo.subtitle,
         description: basicInfo.description,
@@ -258,15 +257,15 @@ export default function CreateCoursePage() {
       });
 
       const course = res.data.data;
-      setCourseId(course.courseId);
+      setCourseId(course.draftId);
 
       const targetList: UploadTarget[] = [];
-      course.sections.forEach((sec: SectionResponse, si: number) => {
-        sec.lessons.forEach((lesson: LessonResponse, li: number) => {
+      course.sections.forEach((sec: DraftSectionResponse, si: number) => {
+        sec.lessons.forEach((lesson: DraftLessonResponse, li: number) => {
           targetList.push({
             lessonId: lesson.lessonId,
             sectionId: sec.sectionId,
-            courseId: course.courseId,
+            courseId: course.draftId,
             lessonTitle: lesson.title,
             sectionTitle: sec.title,
             type: draftSections[si]?.lessons[li]?.type ?? 'video',
@@ -347,9 +346,9 @@ export default function CreateCoursePage() {
       const completeRes = await completeUpload(sessionId);
       const { url } = completeRes.data.data;
       if (target.type === 'video') {
-        await updateVideoUrl(target.courseId, target.sectionId, target.lessonId, { videoUrl: url });
+        await updateDraftVideoUrl(target.courseId, target.sectionId, target.lessonId, { videoUrl: url });
       } else {
-        await updateTextUrl(target.courseId, target.sectionId, target.lessonId, { contentUrl: url });
+        await updateDraftTextUrl(target.courseId, target.sectionId, target.lessonId, { contentUrl: url });
       }
       patchUpload(lessonId, { status: 'done', percent: 100, linkedUrl: url });
     } catch (err: any) {
@@ -382,9 +381,9 @@ export default function CreateCoursePage() {
       const completeRes = await completeUpload(sessionId);
       const { url } = completeRes.data.data;
       if (target.type === 'video') {
-        await updateVideoUrl(target.courseId, target.sectionId, target.lessonId, { videoUrl: url });
+        await updateDraftVideoUrl(target.courseId, target.sectionId, target.lessonId, { videoUrl: url });
       } else {
-        await updateTextUrl(target.courseId, target.sectionId, target.lessonId, { contentUrl: url });
+        await updateDraftTextUrl(target.courseId, target.sectionId, target.lessonId, { contentUrl: url });
       }
       patchUpload(lessonId, { status: 'done', percent: 100, linkedUrl: url });
     } catch {

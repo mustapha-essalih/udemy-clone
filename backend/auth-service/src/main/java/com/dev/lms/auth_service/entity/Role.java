@@ -1,5 +1,7 @@
 package com.dev.lms.auth_service.entity;
 
+import com.dev.lms.common.enums.RoleName;
+
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -19,10 +19,6 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-
-jwt:
-  secret: ${JWT_SECRET:dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yandzaW50ZWdyYXRpb24=}
-
 eureka:
   client:
     service-url:

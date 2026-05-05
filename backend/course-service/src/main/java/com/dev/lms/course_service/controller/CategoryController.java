@@ -11,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,42 +23,33 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public Mono<ResponseEntity<ApiResponse<List<CategoryDto>>>> getAll() {
-        return Mono.fromCallable(() -> categoryService.getAllCategories())
-                .subscribeOn(Schedulers.boundedElastic())
-                .map(categories -> ResponseEntity.ok(ApiResponse.ok("Categories fetched", categories)));
+    public ResponseEntity<ApiResponse<List<CategoryDto>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.ok("Categories fetched", categoryService.getAllCategories()));
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<ApiResponse<CategoryDto>>> getById(@PathVariable UUID id) {
-        return Mono.fromCallable(() -> categoryService.getById(id))
-                .subscribeOn(Schedulers.boundedElastic())
-                .map(response -> ResponseEntity.ok(ApiResponse.ok(response)));
+    public ResponseEntity<ApiResponse<CategoryDto>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(categoryService.getById(id)));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<ResponseEntity<ApiResponse<CategoryDto>>> create(@Valid @RequestBody CreateCategoryRequest request) {
-        return Mono.fromCallable(() -> categoryService.create(request))
-                .subscribeOn(Schedulers.boundedElastic())
-                .map(response -> ResponseEntity.status(HttpStatus.CREATED)
-                        .body(ApiResponse.ok("Category created", response)));
+    public ResponseEntity<ApiResponse<CategoryDto>> create(@Valid @RequestBody CreateCategoryRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Category created", categoryService.create(request)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<ResponseEntity<ApiResponse<CategoryDto>>> update(
+    public ResponseEntity<ApiResponse<CategoryDto>> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateCategoryRequest request) {
-        return Mono.fromCallable(() -> categoryService.update(id, request))
-                .subscribeOn(Schedulers.boundedElastic())
-                .map(response -> ResponseEntity.ok(ApiResponse.ok("Category updated", response)));
+        return ResponseEntity.ok(ApiResponse.ok("Category updated", categoryService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<ResponseEntity<ApiResponse<Void>>> delete(@PathVariable UUID id) {
-        return Mono.fromRunnable(() -> categoryService.delete(id))
-                .subscribeOn(Schedulers.boundedElastic())
-                .then(Mono.just(ResponseEntity.ok(ApiResponse.ok("Category deleted"))));
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        categoryService.delete(id);
+        return ResponseEntity.ok(ApiResponse.ok("Category deleted"));
     }
 }

@@ -1,6 +1,7 @@
-package com.dev.lms.auth_service.dto;
+package com.dev.lms.common.request;
 
-import com.dev.lms.auth_service.entity.RoleName;
+import com.dev.lms.common.enums.RoleName;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

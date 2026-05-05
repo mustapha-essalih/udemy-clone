@@ -3,7 +3,7 @@ VALUES (
     gen_random_uuid(),
     'admin',
     'admin@lms-platform.com',
-    '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG',
+    '$2a$10$NSGNXbPj7rXIVVa37EXiaOhKtFBWUWHS2mkFWJo6I4IGwSPD46pRe', -- admin123
     'ACTIVE',
     NOW()
 )

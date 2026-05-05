@@ -1,4 +1,4 @@
-package com.dev.lms.auth_service.dto;
+package com.dev.lms.common.response;
 
 public record RegistrationResponse(
     String userId,

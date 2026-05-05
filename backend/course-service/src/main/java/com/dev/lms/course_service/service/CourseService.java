@@ -7,8 +7,6 @@ import com.dev.lms.course_service.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +22,8 @@ public class CourseService {
     private final VideoContentRepository videoContentRepository;
     private final TransactionTemplate transactionTemplate;
 
-    public Mono<CourseResponse> create(CreateCourseRequest req) {
-        return Mono.fromCallable(() -> transactionTemplate.execute(status -> {
+    public CourseResponse create(CreateCourseRequest req) {
+        return transactionTemplate.execute(status -> {
             Course course = Course.builder()
                     .instructorId(req.instructorId())
                     .title(req.title())
@@ -63,38 +61,34 @@ public class CourseService {
             }
 
             return toCourseResponse(savedCourse, sectionResponses);
-        })).subscribeOn(Schedulers.boundedElastic());
+        });
     }
 
-    public Mono<CourseResponse> getById(UUID courseId) {
-        return Mono.fromCallable(() -> {
-            Course course = courseRepository.findById(courseId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+    public CourseResponse getById(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
 
-            List<SectionResponse> sections = sectionRepository.findByCourseId(courseId).stream()
-                    .map(section -> {
-                        List<LessonResponse> lessons = lessonRepository
-                                .findBySectionId(section.getSectionId()).stream()
-                                .map(lesson -> {
-                                    VideoContent vc = videoContentRepository
-                                            .findByLessonId(lesson.getLessonId()).orElse(null);
-                                    return toLessonResponse(lesson, vc);
-                                })
-                                .toList();
-                        return toSectionResponse(section, lessons);
-                    })
-                    .toList();
+        List<SectionResponse> sections = sectionRepository.findByCourseId(courseId).stream()
+                .map(section -> {
+                    List<LessonResponse> lessons = lessonRepository
+                            .findBySectionId(section.getSectionId()).stream()
+                            .map(lesson -> {
+                                VideoContent vc = videoContentRepository
+                                        .findByLessonId(lesson.getLessonId()).orElse(null);
+                                return toLessonResponse(lesson, vc);
+                            })
+                            .toList();
+                    return toSectionResponse(section, lessons);
+                })
+                .toList();
 
-            return toCourseResponse(course, sections);
-        }).subscribeOn(Schedulers.boundedElastic());
+        return toCourseResponse(course, sections);
     }
 
-    public Mono<List<CourseResponse>> listByInstructor(UUID instructorId) {
-        return Mono.fromCallable(() ->
-                courseRepository.findByInstructorId(instructorId).stream()
-                        .map(course -> toCourseResponse(course, List.of()))
-                        .toList()
-        ).subscribeOn(Schedulers.boundedElastic());
+    public List<CourseResponse> listByInstructor(UUID instructorId) {
+        return courseRepository.findByInstructorId(instructorId).stream()
+                .map(course -> toCourseResponse(course, List.of()))
+                .toList();
     }
 
     private CourseResponse toCourseResponse(Course c, List<SectionResponse> sections) {
