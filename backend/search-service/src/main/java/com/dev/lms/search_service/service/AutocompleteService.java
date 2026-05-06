@@ -94,14 +94,13 @@ public class AutocompleteService {
         String lower = prefix.toLowerCase();
         Aggregation agg = Aggregation.of(a -> a.terms(t -> t
                 .field("category.raw")
-                .size(maxSuggestions)
-                .include(i -> i.regexp(".*" + java.util.regex.Pattern.quote(lower) + ".*"))));
+                .size(maxSuggestions)));
 
         Query matchQuery = Query.of(q -> q.prefix(p -> p.field("category").value(lower)));
 
         NativeQuery query = NativeQuery.builder()
                 .withQuery(matchQuery)
-                .withPageable(PageRequest.of(0, 0))
+                .withPageable(PageRequest.of(0, 1))
                 .withAggregation("categories", agg)
                 .build();
 

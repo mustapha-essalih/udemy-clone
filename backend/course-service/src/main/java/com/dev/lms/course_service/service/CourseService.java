@@ -28,7 +28,7 @@ public class CourseService {
 
     public CourseResponse create(CreateCourseRequest req) {
         return transactionTemplate.execute(status -> {
-            Course course = Course.builder()
+            Course savedCourse = courseRepository.save(Course.builder()
                     .instructorId(req.instructorId())
                     .title(req.title())
                     .subTitle(req.subTitle())
@@ -39,29 +39,25 @@ public class CourseService {
                     .couponCode(req.couponCode())
                     .courseDurationMinutes(req.courseDurationMinutes())
                     .level(req.level() != null ? req.level() : CourseLevel.ALL_LEVELS)
-                    .build();
-
-            Course savedCourse = courseRepository.save(course);
+                    .build());
 
             List<SectionResponse> sectionResponses = new ArrayList<>();
             for (CreateSectionRequest sectionReq : req.sections()) {
-                Section section = Section.builder()
-                        .courseId(savedCourse.getCourseId())
+                Section savedSection = sectionRepository.save(Section.builder()
+                        .course(savedCourse)
                         .title(sectionReq.title())
-                        .build();
-                Section savedSection = sectionRepository.save(section);
+                        .build());
 
                 List<LessonResponse> lessonResponses = new ArrayList<>();
                 for (CreateLessonRequest lessonReq : sectionReq.lessons()) {
-                    Lesson lesson = Lesson.builder()
-                            .sectionId(savedSection.getSectionId())
+                    Lesson savedLesson = lessonRepository.save(Lesson.builder()
+                            .section(savedSection)
                             .title(lessonReq.title())
                             .lessonType(lessonReq.lessonType())
-                            .build();
-                    Lesson savedLesson = lessonRepository.save(lesson);
-                    lessonResponses.add(toLessonResponse(savedLesson, null));
+                            .build());
+                    lessonResponses.add(toLessonResponse(savedLesson, savedSection.getSectionId(), null));
                 }
-                sectionResponses.add(toSectionResponse(savedSection, lessonResponses));
+                sectionResponses.add(toSectionResponse(savedSection, savedCourse.getCourseId(), lessonResponses));
             }
 
             return toCourseResponse(savedCourse, sectionResponses);
@@ -72,17 +68,17 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
 
-        List<SectionResponse> sections = sectionRepository.findByCourseId(courseId).stream()
+        List<SectionResponse> sections = sectionRepository.findByCourse_CourseId(courseId).stream()
                 .map(section -> {
                     List<LessonResponse> lessons = lessonRepository
-                            .findBySectionId(section.getSectionId()).stream()
+                            .findBySection_SectionId(section.getSectionId()).stream()
                             .map(lesson -> {
                                 VideoContent vc = videoContentRepository
-                                        .findByLessonId(lesson.getLessonId()).orElse(null);
-                                return toLessonResponse(lesson, vc);
+                                        .findByLesson_LessonId(lesson.getLessonId()).orElse(null);
+                                return toLessonResponse(lesson, section.getSectionId(), vc);
                             })
                             .toList();
-                    return toSectionResponse(section, lessons);
+                    return toSectionResponse(section, courseId, lessons);
                 })
                 .toList();
 
@@ -107,9 +103,9 @@ public class CourseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
 
         transactionTemplate.execute(status -> {
-            sectionRepository.findByCourseId(courseId).forEach(section -> {
-                lessonRepository.findBySectionId(section.getSectionId()).forEach(lesson -> {
-                    videoContentRepository.findByLessonId(lesson.getLessonId())
+            sectionRepository.findByCourse_CourseId(courseId).forEach(section -> {
+                lessonRepository.findBySection_SectionId(section.getSectionId()).forEach(lesson -> {
+                    videoContentRepository.findByLesson_LessonId(lesson.getLessonId())
                             .ifPresent(videoContentRepository::delete);
                     lessonRepository.delete(lesson);
                 });
@@ -128,13 +124,13 @@ public class CourseService {
     }
 
     private CourseOverviewResponse toOverviewFromCourse(Course c) {
-        List<SectionOverviewResponse> sections = sectionRepository.findByCourseId(c.getCourseId()).stream()
+        List<SectionOverviewResponse> sections = sectionRepository.findByCourse_CourseId(c.getCourseId()).stream()
                 .map(s -> {
                     List<LessonOverviewResponse> lessons = lessonRepository
-                            .findBySectionId(s.getSectionId()).stream()
+                            .findBySection_SectionId(s.getSectionId()).stream()
                             .map(l -> {
                                 VideoContent vc = videoContentRepository
-                                        .findByLessonId(l.getLessonId()).orElse(null);
+                                        .findByLesson_LessonId(l.getLessonId()).orElse(null);
                                 return new LessonOverviewResponse(
                                         l.getLessonId().toString(), l.getTitle(),
                                         l.getLessonType().name(),
@@ -165,13 +161,13 @@ public class CourseService {
         );
     }
 
-    private SectionResponse toSectionResponse(Section s, List<LessonResponse> lessons) {
-        return new SectionResponse(s.getSectionId(), s.getCourseId(), s.getTitle(), lessons);
+    private SectionResponse toSectionResponse(Section s, UUID courseId, List<LessonResponse> lessons) {
+        return new SectionResponse(s.getSectionId(), courseId, s.getTitle(), lessons);
     }
 
-    private LessonResponse toLessonResponse(Lesson l, VideoContent vc) {
+    private LessonResponse toLessonResponse(Lesson l, UUID sectionId, VideoContent vc) {
         return new LessonResponse(
-                l.getLessonId(), l.getSectionId(), l.getTitle(), l.getLessonType().name(),
+                l.getLessonId(), sectionId, l.getTitle(), l.getLessonType().name(),
                 vc != null ? vc.getVideoUrl() : null,
                 l.getTextUrl(),
                 vc != null ? vc.getDurationMinutes() : null,

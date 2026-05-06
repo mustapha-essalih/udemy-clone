@@ -3,6 +3,8 @@ package com.dev.lms.course_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -15,9 +17,14 @@ public class Section {
     @Column(name = "section_id")
     private UUID sectionId;
 
-    @Column(name = "course_id", nullable = false)
-    private UUID courseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
     @Column(nullable = false)
     private String title;
+
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Lesson> lessons = new ArrayList<>();
+
 }

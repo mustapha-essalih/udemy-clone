@@ -27,21 +27,21 @@ public class LessonService {
         return transactionTemplate.execute(status -> {
             Section section = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Section", sectionId));
-            if (!section.getCourseId().equals(courseId)) {
+            if (!section.getCourse().getCourseId().equals(courseId)) {
                 throw new BusinessException("Section does not belong to course " + courseId);
             }
 
             Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new ResourceNotFoundException("Lesson", lessonId));
-            if (!lesson.getSectionId().equals(sectionId)) {
+            if (!lesson.getSection().getSectionId().equals(sectionId)) {
                 throw new BusinessException("Lesson does not belong to section " + sectionId);
             }
             if (lesson.getLessonType() != LessonType.VIDEO) {
                 throw new BusinessException("Lesson is not of type VIDEO");
             }
 
-            VideoContent vc = videoContentRepository.findByLessonId(lessonId)
-                    .orElseGet(() -> VideoContent.builder().lessonId(lessonId).build());
+            VideoContent vc = videoContentRepository.findByLesson_LessonId(lessonId)
+                    .orElseGet(() -> VideoContent.builder().lesson(lesson).build());
             vc.setVideoUrl(req.videoUrl());
             vc.setDurationMinutes(req.durationMinutes());
             vc.setIsPreview(req.isPreview() != null ? req.isPreview() : false);
@@ -49,7 +49,7 @@ public class LessonService {
             VideoContent saved = videoContentRepository.save(vc);
 
             return new LessonResponse(
-                    lesson.getLessonId(), lesson.getSectionId(), lesson.getTitle(),
+                    lesson.getLessonId(), sectionId, lesson.getTitle(),
                     lesson.getLessonType().name(), saved.getVideoUrl(), null,
                     saved.getDurationMinutes(), saved.getIsPreview(), lesson.getCreatedAt()
             );
@@ -61,13 +61,13 @@ public class LessonService {
         return transactionTemplate.execute(status -> {
             Section section = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Section", sectionId));
-            if (!section.getCourseId().equals(courseId)) {
+            if (!section.getCourse().getCourseId().equals(courseId)) {
                 throw new BusinessException("Section does not belong to course " + courseId);
             }
 
             Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new ResourceNotFoundException("Lesson", lessonId));
-            if (!lesson.getSectionId().equals(sectionId)) {
+            if (!lesson.getSection().getSectionId().equals(sectionId)) {
                 throw new BusinessException("Lesson does not belong to section " + sectionId);
             }
             if (lesson.getLessonType() == LessonType.VIDEO) {
@@ -78,7 +78,7 @@ public class LessonService {
             Lesson saved = lessonRepository.save(lesson);
 
             return new LessonResponse(
-                    saved.getLessonId(), saved.getSectionId(), saved.getTitle(),
+                    saved.getLessonId(), sectionId, saved.getTitle(),
                     saved.getLessonType().name(), null, saved.getTextUrl(),
                     null, null, saved.getCreatedAt()
             );

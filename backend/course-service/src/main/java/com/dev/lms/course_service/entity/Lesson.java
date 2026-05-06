@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,8 +20,9 @@ public class Lesson {
     @Column(name = "lesson_id")
     private UUID lessonId;
 
-    @Column(name = "section_id", nullable = false)
-    private UUID sectionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id", nullable = false)
+    private Section section;
 
     @Column(nullable = false)
     private String title;
@@ -30,6 +33,15 @@ public class Lesson {
 
     @Column(name = "text_url", columnDefinition = "TEXT")
     private String textUrl;
+
+    @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private VideoContent videoContent;
+
+    @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private TextContent textContent;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Resource> resources = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

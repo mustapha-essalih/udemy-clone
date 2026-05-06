@@ -1,9 +1,9 @@
 package com.dev.lms.course_service.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "resources")
@@ -15,8 +15,9 @@ public class Resource {
     @Column(name = "resource_id")
     private UUID resourceId;
 
-    @Column(name = "lesson_id", nullable = false)
-    private UUID lessonId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_id", nullable = false)
+    private Lesson lesson;
 
     @Column(nullable = false)
     private String title;

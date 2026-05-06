@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TextContentRepository extends JpaRepository<TextContent, UUID> {
-    Optional<TextContent> findByLessonId(UUID lessonId);
+    Optional<TextContent> findByLesson_LessonId(UUID lessonId);
 }

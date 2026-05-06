@@ -1,13 +1,17 @@
 package com.dev.lms.course_service.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "text_content")
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+@Getter 
+@Setter 
+@Builder 
+@NoArgsConstructor 
+@AllArgsConstructor
 public class TextContent {
 
     @Id
@@ -15,8 +19,9 @@ public class TextContent {
     @Column(name = "text_content_id")
     private UUID textContentId;
 
-    @Column(name = "lesson_id", unique = true, nullable = false)
-    private UUID lessonId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_id", nullable = false, unique = true)
+    private Lesson lesson;
 
     @Column(name = "text_url", nullable = false, columnDefinition = "TEXT")
     private String textUrl;

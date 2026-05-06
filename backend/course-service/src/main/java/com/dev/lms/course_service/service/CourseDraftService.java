@@ -79,11 +79,11 @@ public class CourseDraftService {
             throw new BusinessException("Only PUBLISHED courses can have update drafts");
         }
 
-        List<SectionDraft> sectionDrafts = sectionRepository.findByCourseId(courseId).stream()
+        List<SectionDraft> sectionDrafts = sectionRepository.findByCourse_CourseId(courseId).stream()
                 .map(section -> {
-                    List<LessonDraft> lessonDrafts = lessonRepository.findBySectionId(section.getSectionId()).stream()
+                    List<LessonDraft> lessonDrafts = lessonRepository.findBySection_SectionId(section.getSectionId()).stream()
                             .map(lesson -> {
-                                VideoContent vc = videoContentRepository.findByLessonId(lesson.getLessonId()).orElse(null);
+                                VideoContent vc = videoContentRepository.findByLesson_LessonId(lesson.getLessonId()).orElse(null);
                                 return LessonDraft.builder()
                                         .lessonId(lesson.getLessonId().toString())
                                         .title(lesson.getTitle())
@@ -272,18 +272,10 @@ public class CourseDraftService {
                 existing.setCourseDurationMinutes(draft.getCourseDurationMinutes());
                 existing.setLevel(resolvedLevel);
                 existing.setStatus(CourseStatus.PUBLISHED);
-                saved = courseRepository.save(existing);
-
-                sectionRepository.findByCourseId(saved.getCourseId()).forEach(section -> {
-                    lessonRepository.findBySectionId(section.getSectionId()).forEach(lesson -> {
-                        videoContentRepository.findByLessonId(lesson.getLessonId())
-                                .ifPresent(videoContentRepository::delete);
-                        lessonRepository.delete(lesson);
-                    });
-                    sectionRepository.delete(section);
-                });
+                existing.getSections().clear();
+                saved = courseRepository.saveAndFlush(existing);
             } else {
-                Course course = Course.builder()
+                saved = courseRepository.save(Course.builder()
                         .instructorId(draft.getInstructorId())
                         .title(draft.getTitle())
                         .subTitle(draft.getSubTitle())
@@ -295,48 +287,41 @@ public class CourseDraftService {
                         .courseDurationMinutes(draft.getCourseDurationMinutes())
                         .level(resolvedLevel)
                         .status(CourseStatus.PUBLISHED)
-                        .build();
-                saved = courseRepository.save(course);
+                        .build());
             }
 
             List<SectionResponse> sectionResponses = new ArrayList<>();
             for (SectionDraft sd : draft.getSections()) {
-                UUID presetSectionId = (!isUpdate && sd.getSectionId() != null)
-                        ? UUID.fromString(sd.getSectionId()) : null;
                 Section section = sectionRepository.save(
                         Section.builder()
-                                .sectionId(presetSectionId)
-                                .courseId(saved.getCourseId())
+                                .course(saved)
                                 .title(sd.getTitle())
                                 .build());
 
                 List<LessonResponse> lessonResponses = new ArrayList<>();
                 for (LessonDraft ld : sd.getLessons()) {
-                    UUID presetLessonId = (!isUpdate && ld.getLessonId() != null)
-                            ? UUID.fromString(ld.getLessonId()) : null;
                     Lesson lesson = lessonRepository.save(
                             Lesson.builder()
-                                    .lessonId(presetLessonId)
-                                    .sectionId(section.getSectionId())
+                                    .section(section)
                                     .title(ld.getTitle())
                                     .lessonType(LessonType.valueOf(ld.getLessonType()))
                                     .textUrl(ld.getTextUrl())
                                     .build());
                     if (ld.getVideoUrl() != null) {
                         videoContentRepository.save(VideoContent.builder()
-                                .lessonId(lesson.getLessonId())
+                                .lesson(lesson)
                                 .videoUrl(ld.getVideoUrl())
                                 .durationMinutes(ld.getDurationMinutes())
                                 .isPreview(ld.getIsPreview() != null ? ld.getIsPreview() : false)
                                 .build());
                     }
                     lessonResponses.add(new LessonResponse(
-                            lesson.getLessonId(), lesson.getSectionId(), lesson.getTitle(),
+                            lesson.getLessonId(), section.getSectionId(), lesson.getTitle(),
                             lesson.getLessonType().name(), ld.getVideoUrl(), ld.getTextUrl(),
                             ld.getDurationMinutes(), ld.getIsPreview(), lesson.getCreatedAt()));
                 }
                 sectionResponses.add(new SectionResponse(
-                        section.getSectionId(), section.getCourseId(), section.getTitle(), lessonResponses));
+                        section.getSectionId(), saved.getCourseId(), section.getTitle(), lessonResponses));
             }
 
             return new CourseResponse(

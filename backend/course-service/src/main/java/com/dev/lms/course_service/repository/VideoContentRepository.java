@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface VideoContentRepository extends JpaRepository<VideoContent, UUID> {
-    Optional<VideoContent> findByLessonId(UUID lessonId);
+    Optional<VideoContent> findByLesson_LessonId(UUID lessonId);
 }

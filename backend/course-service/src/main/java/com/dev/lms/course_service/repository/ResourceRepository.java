@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ResourceRepository extends JpaRepository<Resource, UUID> {
-    List<Resource> findByLessonId(UUID lessonId);
+    List<Resource> findByLesson_LessonId(UUID lessonId);
 }
