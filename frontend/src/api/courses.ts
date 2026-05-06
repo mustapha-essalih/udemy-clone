@@ -197,3 +197,6 @@ export const updateDraftTextUrl = (
     `/courses/instructor/${draftId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
     data
   );
+
+export const submitDraft = (draftId: string) =>
+  client.post<{ data: DraftResponse }>(`/courses/instructor/${draftId}/submit`);

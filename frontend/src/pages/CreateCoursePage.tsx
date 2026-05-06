@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createCourse, updateDraftVideoUrl, updateDraftTextUrl } from '../api/courses';
+import { createCourse, updateDraftVideoUrl, updateDraftTextUrl, submitDraft } from '../api/courses';
 import type { DraftSectionResponse, DraftLessonResponse } from '../api/courses';
 import { startUpload, uploadChunk, completeUpload, pauseUpload, resumeUpload, cancelUpload, CHUNK_SIZE } from '../api/content';
 import type { BasicInfo, DraftSection, UploadTarget, UploadState, ValidationErrors } from './create-course/types';
@@ -516,7 +516,14 @@ export default function CreateCoursePage() {
                   sections={draftSections}
                   targets={targets}
                   uploads={uploads}
-                  onSubmit={() => setSubmitted(true)}
+                  onSubmit={async () => {
+                    try {
+                      await submitDraft(courseId);
+                      setSubmitted(true);
+                    } catch (e) {
+                      showToast('Failed to submit course. Please try again.');
+                    }
+                  }}
                 />
               )}
 
