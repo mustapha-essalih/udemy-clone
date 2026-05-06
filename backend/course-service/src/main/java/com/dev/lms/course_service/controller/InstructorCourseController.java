@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/courses/instructor")
@@ -93,5 +94,14 @@ public class InstructorCourseController {
             @RequestHeader("X-User-Id") String userId) {
         draftService.delete(draftId, UUID.fromString(userId));
         return ResponseEntity.ok(ApiResponse.ok("Draft deleted"));
+    }
+
+    @PostMapping("/published/{courseId}/update-draft")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<DraftResponse>> createUpdateDraft(
+            @PathVariable UUID courseId,
+            @RequestHeader("X-User-Id") String userId) {
+        DraftResponse draft = draftService.createUpdateDraft(UUID.fromString(userId), courseId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Update draft created", draft));
     }
 }

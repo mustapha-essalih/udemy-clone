@@ -17,7 +17,7 @@ export default function DashboardPage() {
       setLoading(false);
       return;
     }
-    listCourses(user.userId)
+    listCourses()
       .then((res) => setCourses(res.data.data))
       .catch(() => setError('Failed to load courses'))
       .finally(() => setLoading(false));

@@ -146,13 +146,13 @@ export const rejectDraft = (draftId: string, feedback: string) =>
   client.post<{ data: DraftResponse }>(`/courses/manager/${draftId}/reject`, { feedback });
 
 export const createCourse = (data: CreateCourseRequest) =>
-  client.post<{ data: DraftResponse }>('/courses', data);
+  client.post<{ data: DraftResponse }>('/courses/instructor', data);
 
 export const getCourse = (id: string) =>
   client.get<{ data: CourseResponse }>(`/courses/${id}`);
 
-export const listCourses = (instructorId: string) =>
-  client.get<{ data: CourseResponse[] }>(`/courses?instructorId=${instructorId}`);
+export const listCourses = () =>
+  client.get<{ data: CourseResponse[] }>('/courses');
 
 export const updateVideoUrl = (
   courseId: string,
@@ -161,7 +161,7 @@ export const updateVideoUrl = (
   data: { videoUrl: string; durationMinutes?: number; isPreview?: boolean }
 ) =>
   client.put<{ data: LessonResponse }>(
-    `/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/video-url`,
+    `/courses/lessons/${courseId}/sections/${sectionId}/lessons/${lessonId}/video-url`,
     data
   );
 
@@ -172,7 +172,7 @@ export const updateTextUrl = (
   data: { contentUrl: string }
 ) =>
   client.put<{ data: LessonResponse }>(
-    `/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
+    `/courses/lessons/${courseId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
     data
   );
 
@@ -183,7 +183,7 @@ export const updateDraftVideoUrl = (
   data: { videoUrl: string; durationMinutes?: number; isPreview?: boolean }
 ) =>
   client.put<{ data: DraftResponse }>(
-    `/courses/drafts/${draftId}/sections/${sectionId}/lessons/${lessonId}/video-url`,
+    `/courses/instructor/${draftId}/sections/${sectionId}/lessons/${lessonId}/video-url`,
     data
   );
 
@@ -194,6 +194,6 @@ export const updateDraftTextUrl = (
   data: { contentUrl: string }
 ) =>
   client.put<{ data: DraftResponse }>(
-    `/courses/drafts/${draftId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
+    `/courses/instructor/${draftId}/sections/${sectionId}/lessons/${lessonId}/text-url`,
     data
   );

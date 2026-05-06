@@ -33,7 +33,7 @@ public class WebConfig implements WebFluxConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/content/**")
                 .allowedOriginPatterns("*")
-                .allowedMethods("GET", "HEAD", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
                 .allowedHeaders("*")
                 .exposedHeaders(
                         "Content-Type", "Content-Length",

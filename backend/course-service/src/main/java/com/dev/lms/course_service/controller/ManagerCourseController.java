@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,5 +56,12 @@ public class ManagerCourseController {
             @PathVariable String draftId,
             @Valid @RequestBody RejectDraftRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("Course rejected", draftService.reject(draftId, request.feedback())));
+    }
+
+    @DeleteMapping("/courses/{courseId}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable UUID courseId) {
+        courseService.delete(courseId);
+        return ResponseEntity.ok(ApiResponse.ok("Course deleted"));
     }
 }

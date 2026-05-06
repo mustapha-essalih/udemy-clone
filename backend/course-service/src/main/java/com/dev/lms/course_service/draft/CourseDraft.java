@@ -17,6 +17,7 @@ import java.util.UUID;
 public class CourseDraft {
     private String draftId;
     private UUID instructorId;
+    private UUID publishedCourseId;
     private String title;
     private String subTitle;
     private String description;

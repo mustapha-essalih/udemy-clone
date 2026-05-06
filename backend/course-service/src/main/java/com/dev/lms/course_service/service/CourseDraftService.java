@@ -6,8 +6,10 @@ import com.dev.lms.course_service.draft.LessonDraft;
 import com.dev.lms.course_service.draft.SectionDraft;
 import com.dev.lms.course_service.dto.*;
 import com.dev.lms.course_service.entity.*;
+import com.dev.lms.course_service.event.CourseIndexEvent;
 import com.dev.lms.course_service.exception.BusinessException;
 import com.dev.lms.course_service.exception.ResourceNotFoundException;
+import com.dev.lms.course_service.kafka.CourseEventPublisher;
 import com.dev.lms.course_service.repository.*;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Service
@@ -36,6 +41,7 @@ public class CourseDraftService {
     private final LessonRepository lessonRepository;
     private final VideoContentRepository videoContentRepository;
     private final TransactionTemplate transactionTemplate;
+    private final CourseEventPublisher courseEventPublisher;
 
     public DraftResponse create(UUID instructorId, CreateDraftRequest req) {
         String draftId = UUID.randomUUID().toString();
@@ -52,6 +58,66 @@ public class CourseDraftService {
                 .courseDurationMinutes(req.courseDurationMinutes())
                 .level(req.level() != null ? req.level().name() : CourseLevel.ALL_LEVELS.name())
                 .sections(toSectionDrafts(req.sections()))
+                .status(DraftStatus.DRAFT)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        persist(draft);
+        addToInstructorIndex(instructorId.toString(), draftId);
+        return toResponse(draft);
+    }
+
+    public DraftResponse createUpdateDraft(UUID instructorId, UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+
+        if (!course.getInstructorId().equals(instructorId)) {
+            throw new AccessDeniedException("Not authorized to create an update draft for this course");
+        }
+        if (course.getStatus() != CourseStatus.PUBLISHED) {
+            throw new BusinessException("Only PUBLISHED courses can have update drafts");
+        }
+
+        List<SectionDraft> sectionDrafts = sectionRepository.findByCourseId(courseId).stream()
+                .map(section -> {
+                    List<LessonDraft> lessonDrafts = lessonRepository.findBySectionId(section.getSectionId()).stream()
+                            .map(lesson -> {
+                                VideoContent vc = videoContentRepository.findByLessonId(lesson.getLessonId()).orElse(null);
+                                return LessonDraft.builder()
+                                        .lessonId(lesson.getLessonId().toString())
+                                        .title(lesson.getTitle())
+                                        .lessonType(lesson.getLessonType().name())
+                                        .videoUrl(vc != null ? vc.getVideoUrl() : null)
+                                        .durationMinutes(vc != null ? vc.getDurationMinutes() : null)
+                                        .isPreview(vc != null ? vc.getIsPreview() : null)
+                                        .textUrl(lesson.getTextUrl())
+                                        .build();
+                            })
+                            .toList();
+                    return SectionDraft.builder()
+                            .sectionId(section.getSectionId().toString())
+                            .title(section.getTitle())
+                            .lessons(new ArrayList<>(lessonDrafts))
+                            .build();
+                })
+                .toList();
+
+        String draftId = UUID.randomUUID().toString();
+        CourseDraft draft = CourseDraft.builder()
+                .draftId(draftId)
+                .instructorId(instructorId)
+                .publishedCourseId(courseId)
+                .title(course.getTitle())
+                .subTitle(course.getSubTitle())
+                .description(course.getDescription())
+                .price(course.getPrice())
+                .isFree(course.getIsFree())
+                .language(course.getLanguage())
+                .couponCode(course.getCouponCode())
+                .courseDurationMinutes(course.getCourseDurationMinutes())
+                .level(course.getLevel().name())
+                .sections(new ArrayList<>(sectionDrafts))
                 .status(DraftStatus.DRAFT)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -188,27 +254,54 @@ public class CourseDraftService {
             level = CourseLevel.ALL_LEVELS;
         }
         final CourseLevel resolvedLevel = level;
+        final boolean isUpdate = draft.getPublishedCourseId() != null;
 
         CourseResponse response = transactionTemplate.execute(status -> {
-            Course course = Course.builder()
-                    .instructorId(draft.getInstructorId())
-                    .title(draft.getTitle())
-                    .subTitle(draft.getSubTitle())
-                    .description(draft.getDescription())
-                    .price(draft.getPrice())
-                    .isFree(draft.getIsFree() != null ? draft.getIsFree() : false)
-                    .language(draft.getLanguage())
-                    .couponCode(draft.getCouponCode())
-                    .courseDurationMinutes(draft.getCourseDurationMinutes())
-                    .level(resolvedLevel)
-                    .status(CourseStatus.PUBLISHED)
-                    .build();
+            Course saved;
 
-            Course saved = courseRepository.save(course);
+            if (isUpdate) {
+                Course existing = courseRepository.findById(draft.getPublishedCourseId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Course", draft.getPublishedCourseId()));
+                existing.setTitle(draft.getTitle());
+                existing.setSubTitle(draft.getSubTitle());
+                existing.setDescription(draft.getDescription());
+                existing.setPrice(draft.getPrice());
+                existing.setIsFree(draft.getIsFree() != null ? draft.getIsFree() : false);
+                existing.setLanguage(draft.getLanguage());
+                existing.setCouponCode(draft.getCouponCode());
+                existing.setCourseDurationMinutes(draft.getCourseDurationMinutes());
+                existing.setLevel(resolvedLevel);
+                existing.setStatus(CourseStatus.PUBLISHED);
+                saved = courseRepository.save(existing);
+
+                sectionRepository.findByCourseId(saved.getCourseId()).forEach(section -> {
+                    lessonRepository.findBySectionId(section.getSectionId()).forEach(lesson -> {
+                        videoContentRepository.findByLessonId(lesson.getLessonId())
+                                .ifPresent(videoContentRepository::delete);
+                        lessonRepository.delete(lesson);
+                    });
+                    sectionRepository.delete(section);
+                });
+            } else {
+                Course course = Course.builder()
+                        .instructorId(draft.getInstructorId())
+                        .title(draft.getTitle())
+                        .subTitle(draft.getSubTitle())
+                        .description(draft.getDescription())
+                        .price(draft.getPrice())
+                        .isFree(draft.getIsFree() != null ? draft.getIsFree() : false)
+                        .language(draft.getLanguage())
+                        .couponCode(draft.getCouponCode())
+                        .courseDurationMinutes(draft.getCourseDurationMinutes())
+                        .level(resolvedLevel)
+                        .status(CourseStatus.PUBLISHED)
+                        .build();
+                saved = courseRepository.save(course);
+            }
 
             List<SectionResponse> sectionResponses = new ArrayList<>();
             for (SectionDraft sd : draft.getSections()) {
-                UUID presetSectionId = sd.getSectionId() != null
+                UUID presetSectionId = (!isUpdate && sd.getSectionId() != null)
                         ? UUID.fromString(sd.getSectionId()) : null;
                 Section section = sectionRepository.save(
                         Section.builder()
@@ -219,7 +312,7 @@ public class CourseDraftService {
 
                 List<LessonResponse> lessonResponses = new ArrayList<>();
                 for (LessonDraft ld : sd.getLessons()) {
-                    UUID presetLessonId = ld.getLessonId() != null
+                    UUID presetLessonId = (!isUpdate && ld.getLessonId() != null)
                             ? UUID.fromString(ld.getLessonId()) : null;
                     Lesson lesson = lessonRepository.save(
                             Lesson.builder()
@@ -260,6 +353,9 @@ public class CourseDraftService {
         redis.delete(DRAFT_KEY_PREFIX + draftId);
         redis.opsForSet().remove(PENDING_INDEX_KEY, draftId);
         redis.opsForSet().remove(INSTRUCTOR_INDEX_PREFIX + draft.getInstructorId().toString(), draftId);
+
+        String eventType = isUpdate ? CourseIndexEvent.UPDATED : CourseIndexEvent.CREATED;
+        courseEventPublisher.publish(toIndexEvent(eventType, response));
 
         return response;
     }
@@ -426,6 +522,31 @@ public class CourseDraftService {
                 d.getCouponCode(), d.getCourseDurationMinutes(), d.getLevel(),
                 d.getSections(), d.getStatus().name(), d.getRejectionFeedback(),
                 d.getCreatedAt(), d.getUpdatedAt(), d.getSubmittedAt(), d.getReviewedAt());
+    }
+
+    private CourseIndexEvent toIndexEvent(String eventType, CourseResponse r) {
+        return new CourseIndexEvent(
+                eventType,
+                r.courseId().toString(),
+                r.title(),
+                r.description(),
+                r.instructorId().toString(),
+                null,
+                null,
+                null,
+                r.rating() != null ? r.rating().floatValue() : null,
+                null,
+                null,
+                r.language(),
+                r.courseDurationMinutes(),
+                r.price() != null ? r.price().floatValue() : null,
+                r.isFree(),
+                r.level(),
+                r.status(),
+                r.createdAt() != null ? r.createdAt().toInstant(ZoneOffset.UTC) : null,
+                Instant.now(),
+                null
+        );
     }
 
     public void delete(String draftId, UUID instructorId) {

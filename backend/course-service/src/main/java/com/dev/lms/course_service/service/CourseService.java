@@ -2,8 +2,10 @@ package com.dev.lms.course_service.service;
 
 import com.dev.lms.course_service.dto.*;
 import com.dev.lms.course_service.entity.*;
+import com.dev.lms.course_service.event.CourseIndexEvent;
 import com.dev.lms.course_service.exception.BusinessException;
 import com.dev.lms.course_service.exception.ResourceNotFoundException;
+import com.dev.lms.course_service.kafka.CourseEventPublisher;
 import com.dev.lms.course_service.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class CourseService {
     private final LessonRepository lessonRepository;
     private final VideoContentRepository videoContentRepository;
     private final TransactionTemplate transactionTemplate;
+    private final CourseEventPublisher courseEventPublisher;
 
     public CourseResponse create(CreateCourseRequest req) {
         return transactionTemplate.execute(status -> {
@@ -97,6 +100,31 @@ public class CourseService {
                 ? courseRepository.findAll()
                 : courseRepository.findByInstructorId(instructorId);
         return courses.stream().map(this::toOverviewFromCourse).toList();
+    }
+
+    public void delete(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+
+        transactionTemplate.execute(status -> {
+            sectionRepository.findByCourseId(courseId).forEach(section -> {
+                lessonRepository.findBySectionId(section.getSectionId()).forEach(lesson -> {
+                    videoContentRepository.findByLessonId(lesson.getLessonId())
+                            .ifPresent(videoContentRepository::delete);
+                    lessonRepository.delete(lesson);
+                });
+                sectionRepository.delete(section);
+            });
+            courseRepository.delete(course);
+            return null;
+        });
+
+        courseEventPublisher.publish(new CourseIndexEvent(
+                CourseIndexEvent.DELETED,
+                courseId.toString(),
+                null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null
+        ));
     }
 
     private CourseOverviewResponse toOverviewFromCourse(Course c) {
