@@ -12,6 +12,7 @@ import com.dev.lms.course_service.repository.*;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -425,5 +426,15 @@ public class CourseDraftService {
                 d.getCouponCode(), d.getCourseDurationMinutes(), d.getLevel(),
                 d.getSections(), d.getStatus().name(), d.getRejectionFeedback(),
                 d.getCreatedAt(), d.getUpdatedAt(), d.getSubmittedAt(), d.getReviewedAt());
+    }
+
+    public void delete(String draftId, UUID instructorId) {
+        String key = DRAFT_KEY_PREFIX + draftId;
+        CourseDraft draft = fetch(draftId);
+        if(draft.getInstructorId() != instructorId) {
+            throw new AccessDeniedException("You are not authorized to delete this draft.");
+        }
+        redis.delete(key);
+        redis.opsForSet().remove(INSTRUCTOR_INDEX_PREFIX + instructorId, draftId);
     }
 }

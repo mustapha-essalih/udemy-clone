@@ -85,4 +85,13 @@ public class InstructorCourseController {
             @Valid @RequestBody UpdateTextContentRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("Text URL saved", draftService.updateLessonTextUrl(draftId, sectionId, lessonId, request)));
     }
+
+    @DeleteMapping("/{draftId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR')")
+    public ResponseEntity<ApiResponse<Void>> deleteCourse(
+            @PathVariable String draftId,
+            @RequestHeader("X-User-Id") String userId) {
+        draftService.delete(draftId, UUID.fromString(userId));
+        return ResponseEntity.ok(ApiResponse.ok("Draft deleted"));
+    }
 }

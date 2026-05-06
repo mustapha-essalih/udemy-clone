@@ -42,12 +42,12 @@ public class SearchController {
             @RequestParam(value = "subcategory", required = false) List<String> subcategories,
             @RequestParam(value = "language", required = false) List<String> languages,
             @RequestParam(value = "level", required = false) List<String> levels,
-            @RequestParam(value = "minRating", required = false) Float minRating,
-            @RequestParam(value = "price", required = false) PriceFilter price,
+            @RequestParam(required = false) Float minRating,
+            @RequestParam(required = false) PriceFilter price,
             @RequestParam(value = "duration", required = false) List<DurationBucket> durations,
-            @RequestParam(value = "sort", required = false) SortOption sort,
-            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size) {
+            @RequestParam(required = false) SortOption sort,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer size) {
 
         SearchRequest req = new SearchRequest(query, categories, subcategories, languages, levels,
                 minRating, price, durations, sort, page, size);

@@ -3,6 +3,9 @@ package com.dev.lms.search_service.controller;
 import com.dev.lms.common.response.ApiResponse;
 import com.dev.lms.search_service.event.CourseIndexEvent;
 import com.dev.lms.search_service.service.CourseIndexService;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,15 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/search/admin/index")
 public class IndexAdminController {
 
     private final CourseIndexService indexService;
 
-    public IndexAdminController(CourseIndexService indexService) {
-        this.indexService = indexService;
-    }
 
     @PostMapping("/courses")
     public ResponseEntity<ApiResponse<Void>> indexCourse(@RequestBody CourseIndexEvent event) {
