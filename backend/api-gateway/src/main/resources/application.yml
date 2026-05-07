@@ -15,14 +15,10 @@ spring:
                 allowed-methods: "*"
                 allowed-headers: "*"
           routes:
-            - id: auth-service
-              uri: lb://auth-service
-              predicates:
-                - Path=/api/auth/**
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path=/api/users/**
+                - Path=/api/users/**, /api/auth/**
             - id: course-service
               uri: lb://course-service
               predicates:
