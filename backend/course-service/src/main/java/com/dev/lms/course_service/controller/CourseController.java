@@ -1,6 +1,7 @@
 package com.dev.lms.course_service.controller;
 
 import com.dev.lms.common.response.ApiResponse;
+import com.dev.lms.course_service.dto.CourseInfoResponse;
 import com.dev.lms.course_service.dto.CourseResponse;
 import com.dev.lms.course_service.service.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,12 @@ public class CourseController {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'MANAGER', 'ADMIN')")
     public ResponseEntity<ApiResponse<CourseResponse>> getCourse(@PathVariable UUID courseId) {
         return ResponseEntity.ok(ApiResponse.ok(courseService.getById(courseId)));
+    }
+
+    @GetMapping("/{courseId}/info")
+    @PreAuthorize("hasAnyRole('STUDENT', 'INSTRUCTOR', 'MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<CourseInfoResponse>> getCourseInfo(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(ApiResponse.ok(courseService.getCourseInfo(courseId)));
     }
 
     @GetMapping

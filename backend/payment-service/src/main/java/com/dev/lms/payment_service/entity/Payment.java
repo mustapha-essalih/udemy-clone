@@ -11,14 +11,15 @@ import java.util.UUID;
 @Table(name = "payments")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class Payment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "course_id")
+    @Column(name = "course_id", nullable = false)
     private UUID courseId;
 
     private BigDecimal amount;
@@ -31,8 +32,11 @@ public class Payment {
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
-    @Column(name = "stripe_payment_id", unique = true)
-    private String stripePaymentId;
+    @Column(name = "stripe_session_id", unique = true)
+    private String stripeSessionId;
+
+    @Column(name = "stripe_payment_intent_id", unique = true)
+    private String stripePaymentIntentId;
 
     @Column(name = "idempotency_key", unique = true)
     private String idempotencyKey;

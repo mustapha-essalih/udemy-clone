@@ -27,14 +27,10 @@ spring:
               uri: lb://content-service
               predicates:
                 - Path=/api/content/**
-            - id: enrollment-service
-              uri: lb://enrollment-service
-              predicates:
-                - Path=/api/enrollments/**
             - id: payment-service
               uri: lb://payment-service
               predicates:
-                - Path=/api/payments/**
+                - Path=/api/payments/**, /api/enrollments/**
             - id: review-service
               uri: lb://review-service
               predicates:

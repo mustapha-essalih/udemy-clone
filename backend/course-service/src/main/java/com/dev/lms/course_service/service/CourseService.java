@@ -91,6 +91,15 @@ public class CourseService {
                 .toList();
     }
 
+    public CourseInfoResponse getCourseInfo(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+        return new CourseInfoResponse(
+                course.getCourseId(), course.getInstructorId(), course.getTitle(),
+                course.getPrice(), course.getIsFree(), course.getStatus().name()
+        );
+    }
+
     public List<CourseOverviewResponse> listAllAsOverview(String role, UUID instructorId) {
         List<Course> courses = (role.equals("ADMIN") || role.equals("MANAGER"))
                 ? courseRepository.findAll()

@@ -20,7 +20,6 @@
 		<module>user-service</module>
 		<module>course-service</module>
 		<module>content-service</module>
-		<module>enrollment-service</module>
 		<module>payment-service</module>
 		<module>review-service</module>
 		<module>notification-service</module>

@@ -1,4 +1,4 @@
-package com.dev.lms.course_service.config;
+package com.dev.lms.payment_service.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,13 +33,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/courses/categories", "/api/courses/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/courses/subcategories", "/api/courses/subcategories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/courses/*/info").hasAnyRole("STUDENT", "INSTRUCTOR", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/courses/instructor").hasAnyRole("INSTRUCTOR", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/courses/drafts/pending").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/courses/drafts/*/approve",
-                                "/api/courses/drafts/*/reject").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/payments/stripe/webhook").permitAll()
+                        .requestMatchers("/api/payments/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")
+                        .requestMatchers("/api/enrollments/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new GatewayHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
