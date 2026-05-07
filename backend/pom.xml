@@ -16,15 +16,11 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>auth-service</module>
 		<module>user-service</module>
 		<module>course-service</module>
 		<module>content-service</module>
 		<module>payment-service</module>
-		<module>review-service</module>
-		<module>notification-service</module>
 		<module>search-service</module>
-		<module>analytics-service</module>
 		<module>admin-service</module>
 		<module>api-gateway</module>
 		<module>common</module>

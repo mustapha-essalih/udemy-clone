@@ -28,7 +28,6 @@ public class InstructorCourseController {
     @PreAuthorize("hasAnyRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<List<DraftResponse>>> listMyCourses(
             @RequestHeader("X-User-Id") String userId) {
-                System.out.println(userId);
         return ResponseEntity.ok(ApiResponse.ok(draftService.listByInstructor(UUID.fromString(userId))));
     }
 

@@ -11,46 +11,44 @@ spring:
           globalcors:
             cors-configurations:
               '[/**]':
-                allowed-origins: "*"
-                allowed-methods: "*"
+                allowed-origins: "${ALLOWED_ORIGINS:http://localhost:3000}"
+                allowed-methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
                 allowed-headers: "*"
+                allow-credentials: true
+                max-age: 3600
+          httpclient:
+            connect-timeout: 3000
+            response-timeout: 10s
           routes:
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path=/api/users/**, /api/auth/**
+
             - id: course-service
               uri: lb://course-service
               predicates:
                 - Path=/api/courses/**
+
             - id: content-service
               uri: lb://content-service
               predicates:
                 - Path=/api/content/**
+
             - id: payment-service
               uri: lb://payment-service
               predicates:
                 - Path=/api/payments/**, /api/enrollments/**
-            - id: review-service
-              uri: lb://review-service
-              predicates:
-                - Path=/api/reviews/**
-            - id: notification-service
-              uri: lb://notification-service
-              predicates:
-                - Path=/api/notifications/**
-            - id: analytics-service
-              uri: lb://analytics-service
-              predicates:
-                - Path=/api/analytics/**
-            - id: admin-service
-              uri: lb://admin-service
-              predicates:
-                - Path=/api/admin/**
+
             - id: search-service
               uri: lb://search-service
               predicates:
                 - Path=/api/search/**
+
+            - id: admin-service
+              uri: lb://admin-service
+              predicates:
+                - Path=/api/admin/**
 
 jwt:
   secret: ${JWT_SECRET:dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9yandzaW50ZWdyYXRpb24=}
@@ -65,3 +63,8 @@ eureka:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
+logging:
+  level:
+    com.dev.lms.api_gateway: DEBUG
+    org.springframework.cloud.gateway: INFO

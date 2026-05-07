@@ -13,6 +13,7 @@ import com.dev.lms.course_service.kafka.CourseEventPublisher;
 import com.dev.lms.course_service.repository.*;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CourseDraftService {
@@ -65,6 +67,7 @@ public class CourseDraftService {
 
         persist(draft);
         addToInstructorIndex(instructorId.toString(), draftId);
+        log.info("Draft created: id={} instructorId={}", draftId, instructorId);
         return toResponse(draft);
     }
 
@@ -341,6 +344,7 @@ public class CourseDraftService {
 
         String eventType = isUpdate ? CourseIndexEvent.UPDATED : CourseIndexEvent.CREATED;
         courseEventPublisher.publish(toIndexEvent(eventType, response));
+        log.info("Draft {} approved, course {} published (eventType={})", draftId, response.courseId(), eventType);
 
         return response;
     }
@@ -360,7 +364,7 @@ public class CourseDraftService {
 
         persist(draft);
         redis.opsForSet().remove(PENDING_INDEX_KEY, draftId);
-
+        log.info("Draft {} rejected", draftId);
         return toResponse(draft);
     }
 
@@ -404,14 +408,20 @@ public class CourseDraftService {
     }
 
     private List<CourseOverviewResponse> scanAllDrafts() {
-        Set<String> keys = redis.keys(DRAFT_KEY_PREFIX + "*");
-        if (keys == null || keys.isEmpty()) return List.of();
+        Set<String> draftIds = redis.opsForSet().members(PENDING_INDEX_KEY);
+        if (draftIds == null || draftIds.isEmpty()) return List.of();
         List<CourseOverviewResponse> result = new ArrayList<>();
-        for (String key : keys) {
-            String json = redis.opsForValue().get(key);
-            if (json != null) {
-                result.add(toOverviewFromDraft(deserialize(json)));
+        List<String> stale = new ArrayList<>();
+        for (String id : draftIds) {
+            String json = redis.opsForValue().get(DRAFT_KEY_PREFIX + id);
+            if (json == null) {
+                stale.add(id);
+                continue;
             }
+            result.add(toOverviewFromDraft(deserialize(json)));
+        }
+        if (!stale.isEmpty()) {
+            redis.opsForSet().remove(PENDING_INDEX_KEY, stale.toArray(new Object[0]));
         }
         return result;
     }
@@ -535,12 +545,11 @@ public class CourseDraftService {
     }
 
     public void delete(String draftId, UUID instructorId) {
-        String key = DRAFT_KEY_PREFIX + draftId;
         CourseDraft draft = fetch(draftId);
-        if(draft.getInstructorId() != instructorId) {
+        if (!draft.getInstructorId().equals(instructorId)) {
             throw new AccessDeniedException("You are not authorized to delete this draft.");
         }
-        redis.delete(key);
+        redis.delete(DRAFT_KEY_PREFIX + draftId);
         redis.opsForSet().remove(INSTRUCTOR_INDEX_PREFIX + instructorId, draftId);
     }
 }

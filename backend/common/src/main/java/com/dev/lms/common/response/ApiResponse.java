@@ -17,6 +17,10 @@ public record ApiResponse<T>(
         return new ApiResponse<>(true, message, null);
     }
 
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return new ApiResponse<>(true, message, data);
+    }
+
     public static ApiResponse<Void> created(String message) {
         return new ApiResponse<>(true, message, null);
     }

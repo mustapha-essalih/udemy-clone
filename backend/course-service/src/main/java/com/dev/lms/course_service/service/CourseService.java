@@ -8,6 +8,7 @@ import com.dev.lms.course_service.exception.ResourceNotFoundException;
 import com.dev.lms.course_service.kafka.CourseEventPublisher;
 import com.dev.lms.course_service.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CourseService {

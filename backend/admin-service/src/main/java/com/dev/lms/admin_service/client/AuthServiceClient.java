@@ -36,7 +36,7 @@ public class AuthServiceClient {
 
     public RegistrationResponse registerManager(RegisterRequest request) {
         return webClient.post()
-                .uri("lb://auth-service/api/auth/register-manager")
+                .uri("lb://user-service/api/auth/register-manager")
                 .headers(this::propagateUserHeaders)
                 .bodyValue(request)
                 .retrieve()

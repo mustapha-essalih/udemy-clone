@@ -63,14 +63,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
-        
-        if (ex instanceof HttpMessageNotReadableException) {
-            String message = ex.getMostSpecificCause().getMessage();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(400, "Bad Request", message, req.getRequestURI()));
-        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(400, "Bad Request", "Invalid request body", req.getRequestURI()));
+                .body(new ErrorResponse(400, "Bad Request", ex.getMostSpecificCause().getMessage(), req.getRequestURI()));
     }
 
     @ExceptionHandler(ForbiddenException.class)

@@ -33,7 +33,9 @@ import com.dev.lms.common.request.RegisterRequest;
 import com.dev.lms.common.response.RegistrationResponse;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -76,8 +78,8 @@ public class AuthService {
         user.getRoles().add(roleEntity);
 
         User saved = userRepository.save(user);
+        log.info("User registered: id={} role={}", saved.getId(), role);
         return buildRegistrationResponse(saved);
-
     }
 
     @Transactional
@@ -116,6 +118,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
+        log.info("User logged in: id={}", user.getId());
         return buildAuthResponse(user);
     }
 
