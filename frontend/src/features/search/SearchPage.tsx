@@ -175,6 +175,7 @@ function CategoriesMenu() {
                   <li key={c.id}>
                     <button
                       onMouseEnter={() => setActive(c.id)}
+                      onFocus={() => setActive(c.id)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 16px', background: on ? 'var(--lm-surface)' : 'transparent', color: on ? 'var(--lm-accent)' : 'var(--lm-ink)', borderTop: 'none', borderRight: 'none', borderBottom: 'none', borderLeft: on ? '2px solid var(--lm-accent)' : '2px solid transparent', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.12s' }}
                     >
                       {c.label}
@@ -203,7 +204,7 @@ function CategoriesMenu() {
                 ))}
               </ul>
               <div className="flex items-center justify-between gap-2 mt-4 pt-4" style={{ borderTop: '1px solid var(--lm-line-2)' }}>
-                <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--lm-muted)', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }}>
+                <span style={{ color: 'var(--lm-muted)', fontFamily: "'JetBrains Mono',monospace", fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                   trending in {cat.label.toLowerCase()}
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -255,19 +256,16 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
   );
 
   return (
-    <header
-      className="sticky top-0 z-40"
-      style={{ background: 'color-mix(in oklab, var(--lm-bg) 86%, transparent)', backdropFilter: 'blur(14px) saturate(160%)', WebkitBackdropFilter: 'blur(14px) saturate(160%)', borderBottom: '1px solid var(--lm-line-2)' }}
-    >
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 flex items-center gap-3 lg:gap-6" style={{ height: 64 }}>
+    <header className="lm-navbar">
+      <div className="lm-navbar-inner">
         <Logo />
 
-        <nav className="hidden lg:flex items-center gap-1 ml-2">
+        <nav className="lm-navbar-cats">
           <CategoriesMenu />
         </nav>
 
         {/* Search bar */}
-        <div className="hidden md:flex flex-1 max-w-[520px] relative">
+        <div className="lm-navbar-search-wrap">
           <label className="lm-search w-full flex items-center gap-2 px-4 cursor-text" style={{ height: 40 }}>
             <IcoSearch width="16" height="16" style={{ color: 'var(--lm-muted)', flexShrink: 0 }}/>
             <input
@@ -314,7 +312,7 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
           )}
         </div>
 
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="lm-navbar-right">
           {/* Cart */}
           <div ref={cartRef} style={{ position: 'relative' }}>
             {iconBtn(
@@ -448,7 +446,7 @@ function FilterSidebar({ filters, setFilters, embedded }: {
   const getVal = (id: FKey) => filters[id];
 
   const onCheck = (id: FKey, v: string | number) => setFilters(prev => {
-    const cur = new Set(getArr(id));
+    const cur = new Set((prev[id] as string[] | undefined) ?? []);
     cur.has(String(v)) ? cur.delete(String(v)) : cur.add(String(v));
     return { ...prev, [id]: Array.from(cur) };
   });
@@ -541,7 +539,7 @@ function CourseCard({ course, inCart, onAdd, onRemove }: {
     <article className="lm-card overflow-hidden flex flex-col lm-fade">
       <div className="p-3 pb-0">
         <div className="lm-thumb" style={{ background: `linear-gradient(135deg,${a} 0%,${b} 100%)` }}>
-          <div className="lm-thumb-tag">{(c.category || 'COURSE').slice(0, 10).toUpperCase()}</div>
+          <div className="lm-thumb-tag">{(c.subcategory || c.category || 'COURSE').slice(0, 6).toUpperCase()}</div>
           <div className="lm-thumb-glyph">{getGlyph(c.title)}</div>
         </div>
       </div>
@@ -646,6 +644,33 @@ function FooterCol({ title, links }: { title: string; links: string[] }) {
   );
 }
 
+// ─── URL ↔ filter serialisation ───────────────────────────────────────────────
+
+function parseFiltersFromParams(sp: URLSearchParams): LumenFilters {
+  const f: LumenFilters = {};
+  const r    = sp.get('rating');   if (r)    f.rating   = Number(r);
+  const p    = sp.get('price');    if (p)    f.price    = p;
+  const lang = sp.get('language'); if (lang) f.language = lang.split(',');
+  const dur  = sp.get('duration'); if (dur)  f.duration = dur.split(',');
+  const lvl  = sp.get('level');    if (lvl)  f.level    = lvl.split(',');
+  const feat = sp.get('features'); if (feat) f.features = feat.split(',');
+  return f;
+}
+
+function toUrlParams(q: string, sort: SortOption, filters: LumenFilters, page: number): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (q) p.q = q;
+  if (sort !== 'RELEVANCE') p.sort = sort;
+  if (filters.rating != null) p.rating = String(filters.rating);
+  if (filters.price && filters.price !== 'all') p.price = filters.price;
+  if (filters.language?.length) p.language = filters.language.join(',');
+  if (filters.duration?.length) p.duration = filters.duration.join(',');
+  if (filters.level?.length)    p.level    = filters.level.join(',');
+  if (filters.features?.length) p.features = filters.features.join(',');
+  if (page > 0) p.page = String(page);
+  return p;
+}
+
 // ─── Sort options ─────────────────────────────────────────────────────────────
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -665,19 +690,30 @@ export default function SearchPage() {
   const [query,      setQuery]      = useState(searchParams.get('q') ?? '');
   const [inputValue, setInputValue] = useState(searchParams.get('q') ?? '');
   const [sort,       setSort]       = useState<SortOption>((searchParams.get('sort') as SortOption) ?? 'RELEVANCE');
-  const [filters,    setFilters]    = useState<LumenFilters>({ rating: 4.0, price: 'all' });
-  const [page,       setPage]       = useState(0);
+  const [filters,    setFilters]    = useState<LumenFilters>(() => parseFiltersFromParams(searchParams));
+  const [page,       setPage]       = useState(Number(searchParams.get('page') ?? 0));
   const [sidebarHidden, setSidebarHidden] = useState(false);
   const [drawerOpen,    setDrawerOpen]    = useState(false);
   const [cart,       setCart]       = useState<CourseHit[]>([]);
 
   const [result,  setResult]  = useState<SearchResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
   const [suggestions,     setSuggestions]     = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Sync all search/filter state to URL (read-back is safe: searchParams not in deps)
+  useEffect(() => {
+    setSearchParams(toUrlParams(query, sort, filters, page), { replace: true });
+  }, [query, sort, filters, page, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update filters and always reset to page 0
+  const applyFilters = useCallback((updater: React.SetStateAction<LumenFilters>) => {
+    setFilters(updater);
+    setPage(0);
+  }, []);
 
   // Build API params from Lumen filter state
   const buildParams = useCallback(() => {
@@ -728,11 +764,7 @@ export default function SearchPage() {
     setInputValue(q);
     setPage(0);
     setShowSuggestions(false);
-    const sp: Record<string, string> = {};
-    if (q) sp['q'] = q;
-    if (sort !== 'RELEVANCE') sp['sort'] = sort;
-    setSearchParams(sp, { replace: true });
-  }, [sort, setSearchParams]);
+  }, []);
 
   const addToCart    = (c: CourseHit) => setCart(cur => cur.find(x => x.courseId === c.courseId) ? cur : [...cur, c]);
   const removeFromCart = (id: string) => setCart(cur => cur.filter(x => x.courseId !== id));
@@ -757,7 +789,7 @@ export default function SearchPage() {
   }, [filters]);
 
   const clearChip = (chip: { gid: keyof LumenFilters; v: string | number; single: boolean }) => {
-    setFilters(prev => {
+    applyFilters(prev => {
       if (chip.single) { const n = { ...prev }; delete n[chip.gid]; return n; }
       const cur = new Set<string>((prev[chip.gid] as string[]) ?? []);
       cur.delete(String(chip.v));
@@ -782,22 +814,22 @@ export default function SearchPage() {
         removeFromCart={removeFromCart}
       />
 
-      <main className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 pt-8 pb-24">
-        <div className={`grid gap-8 ${!sidebarHidden ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : ''}`}>
+      <main className="lm-page-main">
+        <div className={`lm-two-col${!sidebarHidden ? ' lm-has-sidebar' : ''}`}>
 
           {/* Desktop sidebar */}
           {!sidebarHidden && (
-            <div className="hidden lg:block">
-              <div style={{ position: 'sticky', top: 80, height: 'calc(100vh - 96px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <FilterSidebar filters={filters} setFilters={setFilters} embedded/>
+            <div className="lm-sidebar-col">
+              <div className="lm-sidebar-sticky">
+                <FilterSidebar filters={filters} setFilters={applyFilters} embedded/>
               </div>
             </div>
           )}
 
           {/* Main content */}
-          <div className="min-w-0">
+          <div style={{ minWidth: 0 }}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
+            <div className="lm-toolbar">
               <div>
                 <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4, color: 'var(--lm-ink)' }}>
                   {loading ? (
@@ -809,17 +841,17 @@ export default function SearchPage() {
                 <p style={{ fontSize: 13, marginTop: 3, color: 'var(--lm-muted)' }}>Updated daily · ranked by Lumen relevance</p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="lm-toolbar-actions">
                 {/* Mobile: all filters button */}
-                <button onClick={() => setDrawerOpen(true)} className="lg:hidden lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
+                <button onClick={() => setDrawerOpen(true)} className="lm-filter-mobile lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
                   <IcoFilter width="14" height="14"/> All filters
                 </button>
                 {/* Desktop: toggle sidebar */}
-                <button onClick={() => setSidebarHidden(h => !h)} className="hidden lg:inline-flex lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
+                <button onClick={() => setSidebarHidden(h => !h)} className="lm-filter-desktop lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
                   <IcoFilter width="14" height="14"/> {sidebarHidden ? 'Show' : 'Hide'} filters
                 </button>
                 {/* Sort */}
-                <div className="hidden md:flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid var(--lm-line)' }}>
+                <div className="lm-sort-row">
                   <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lm-muted)' }}>sort</span>
                   <select
                     value={sort}
@@ -843,7 +875,7 @@ export default function SearchPage() {
                   </button>
                 ))}
                 <button
-                  onClick={() => setFilters({})}
+                  onClick={() => applyFilters({})}
                   style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--lm-muted)' }}
                   onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
                   onMouseLeave={e => (e.currentTarget.style.textDecoration = '')}
@@ -860,17 +892,17 @@ export default function SearchPage() {
 
             {/* Grid */}
             {loading ? (
-              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 ${sidebarHidden ? 'lg:grid-cols-3 2xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+              <div className={`lm-card-grid ${sidebarHidden ? 'lm-grid-nosidebar' : 'lm-grid-sidebar'}`}>
                 {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} delay={i * 60}/>)}
               </div>
             ) : result?.hits.length === 0 ? (
               <div className="text-center py-20 rounded-2xl" style={{ border: '1px solid var(--lm-line-2)' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--lm-ink)', marginBottom: 6 }}>No courses match those filters</div>
                 <div style={{ fontSize: 13, color: 'var(--lm-muted)', marginBottom: 16 }}>Try removing a filter, or search a broader keyword.</div>
-                <button onClick={() => setFilters({})} className="lm-btn lm-btn-soft" style={{ height: 40, fontSize: 13 }}>Reset filters</button>
+                <button onClick={() => applyFilters({})} className="lm-btn lm-btn-soft" style={{ height: 40, fontSize: 13 }}>Reset filters</button>
               </div>
             ) : (
-              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 ${sidebarHidden ? 'lg:grid-cols-3 2xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+              <div className={`lm-card-grid ${sidebarHidden ? 'lm-grid-nosidebar' : 'lm-grid-sidebar'}`}>
                 {result?.hits.map(c => (
                   <CourseCard
                     key={c.courseId}
@@ -906,7 +938,7 @@ export default function SearchPage() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--lm-line-2)', background: 'var(--lm-surface)' }}>
-        <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 py-10 grid md:grid-cols-4 gap-8">
+        <div className="lm-footer-inner">
           <div>
             <Logo/>
             <p style={{ fontSize: 13, marginTop: 12, lineHeight: 1.6, color: 'var(--lm-muted)' }}>
@@ -918,7 +950,7 @@ export default function SearchPage() {
           <FooterCol title="Support" links={['Help center', 'Contact', 'Refund policy', 'Status']}/>
         </div>
         <div style={{ borderTop: '1px solid var(--lm-line-2)' }}>
-          <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 py-5 flex items-center justify-between flex-wrap gap-2" style={{ fontSize: 12, color: 'var(--lm-muted)' }}>
+          <div className="lm-footer-bottom" style={{ fontSize: 12, color: 'var(--lm-muted)' }}>
             <span>© 2026 Lumen Learning, Inc.</span>
             <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>made for curious people</span>
           </div>
@@ -940,10 +972,10 @@ export default function SearchPage() {
           ><IcoClose width="16" height="16"/></button>
         </div>
         <div className="flex-1 lm-scroll px-5 py-3" style={{ overflowY: 'auto' }}>
-          <FilterSidebar filters={filters} setFilters={setFilters} embedded/>
+          <FilterSidebar filters={filters} setFilters={applyFilters} embedded/>
         </div>
         <div className="flex gap-2 p-4" style={{ borderTop: '1px solid var(--lm-line-2)', flexShrink: 0 }}>
-          <button onClick={() => setFilters({})} className="lm-btn lm-btn-ghost flex-1" style={{ height: 44, fontSize: 13 }}>Reset</button>
+          <button onClick={() => applyFilters({})} className="lm-btn lm-btn-ghost flex-1" style={{ height: 44, fontSize: 13 }}>Reset</button>
           <button onClick={() => setDrawerOpen(false)} className="lm-btn lm-btn-primary flex-1" style={{ height: 44, fontSize: 13 }}>
             Show {result?.total.toLocaleString() ?? '…'}
           </button>

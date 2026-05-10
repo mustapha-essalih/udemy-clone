@@ -9,6 +9,7 @@ import CourseDetailPage from './pages/CourseDetailPage';
 import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import CoursePlayerPage from './features/course-player/CoursePlayerPage';
 import SearchPage from './features/search/SearchPage';
+import CoursePage from './features/course/CoursePage';
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
             }
           />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/" element={<CoursePage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

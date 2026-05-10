@@ -53,6 +53,19 @@
   box-shadow: none;
 }
 
+/* Prevent global dark-theme input styles from bleeding into lm-check / lm-radio */
+.lumen-page input[type="checkbox"],
+.lumen-page input[type="radio"] {
+  width: auto;
+  margin-top: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
 .lumen-page button {
   cursor: pointer;
   font-family: inherit;
@@ -61,6 +74,10 @@
 .lumen-page select {
   margin-top: 0;
   width: auto;
+  background: var(--lm-surface);
+  color: var(--lm-ink);
+  border-color: var(--lm-line);
+  font-family: inherit;
 }
 
 /* ── Custom checkbox ─────────────────────────────────────────────────────── */
@@ -70,6 +87,8 @@
   width: 18px;
   height: 18px;
   min-width: 18px;
+  padding: 0;
+  margin-top: 0;
   border: 1.5px solid var(--lm-line);
   border-radius: 5px;
   background: var(--lm-surface);
@@ -77,6 +96,7 @@
   place-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 .lm-check:hover { border-color: var(--lm-accent); }
 .lm-check:checked {
@@ -99,6 +119,8 @@
   width: 18px;
   height: 18px;
   min-width: 18px;
+  padding: 0;
+  margin-top: 0;
   border: 1.5px solid var(--lm-line);
   border-radius: 50%;
   background: var(--lm-surface);
@@ -106,6 +128,7 @@
   place-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 .lm-radio:hover { border-color: var(--lm-accent); }
 .lm-radio:checked { border-color: var(--lm-accent); }
@@ -387,3 +410,164 @@
 .lm-cat-sub:hover {
   background: var(--lm-line-2);
 }
+
+/* ── Page layout system (replaces dynamic Tailwind) ────────────────────────── */
+
+/* Override :root font-size so rem calculations are correct (16px = design base) */
+.lumen-page { font-size: 16px; }
+
+/* Navbar */
+.lm-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in oklab, var(--lm-bg) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid var(--lm-line-2);
+}
+.lm-navbar-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+@media (min-width: 1024px) { .lm-navbar-inner { padding: 0 40px; gap: 32px; } }
+
+.lm-navbar-cats {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+@media (min-width: 1024px) { .lm-navbar-cats { display: flex; } }
+
+.lm-navbar-search-wrap {
+  display: none;
+  flex: 1;
+  max-width: 520px;
+  position: relative;
+}
+@media (min-width: 768px) { .lm-navbar-search-wrap { display: flex; } }
+
+.lm-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Page main */
+.lm-page-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+}
+@media (min-width: 1024px) { .lm-page-main { padding-left: 40px; padding-right: 40px; } }
+
+/* Two-column layout */
+.lm-two-col {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 1024px) {
+  .lm-two-col.lm-has-sidebar {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+}
+
+/* Sidebar column */
+.lm-sidebar-col {
+  display: none;
+}
+@media (min-width: 1024px) { .lm-sidebar-col { display: block; } }
+
+.lm-sidebar-sticky {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Course card grid */
+.lm-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 640px) {
+  .lm-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1280px) {
+  .lm-card-grid.lm-grid-sidebar { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1024px) {
+  .lm-card-grid.lm-grid-nosidebar { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1536px) {
+  .lm-card-grid.lm-grid-nosidebar { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Toolbar */
+.lm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.lm-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Filter toggle button visibility */
+.lm-filter-mobile { display: flex; }
+@media (min-width: 1024px) { .lm-filter-mobile { display: none !important; } }
+
+.lm-filter-desktop { display: none; }
+@media (min-width: 1024px) { .lm-filter-desktop { display: inline-flex; } }
+
+/* Sort row */
+.lm-sort-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--lm-line);
+}
+@media (min-width: 768px) { .lm-sort-row { display: flex; } }
+
+/* Footer */
+.lm-footer-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: grid;
+  gap: 32px;
+}
+@media (min-width: 768px) {
+  .lm-footer-inner { grid-template-columns: repeat(4, 1fr); padding-left: 40px; padding-right: 40px; }
+}
+.lm-footer-bottom {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (min-width: 1024px) { .lm-footer-bottom { padding-left: 40px; padding-right: 40px; } }
