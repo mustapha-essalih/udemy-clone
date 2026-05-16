@@ -42,4 +42,3 @@ public class LessonController {
                 lessonService.updateTextContent(courseId, sectionId, lessonId, request)));
     }
 }
-// ourse details page

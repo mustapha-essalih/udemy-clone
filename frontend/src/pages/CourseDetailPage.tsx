@@ -118,7 +118,7 @@ export default function CourseDetailPage() {
     const state = getState(lesson.lessonId);
     if (!state.sessionId) return;
     pauseFlags.current[state.sessionId] = true;
-    try { await pauseUpload(state.sessionId); } catch { /* ignore */ }
+    try { await pauseUpload(state.sessionId); } catch {  }
     patchUpload(lesson.lessonId, { status: 'paused' });
   };
 
@@ -126,7 +126,7 @@ export default function CourseDetailPage() {
     const state = getState(lesson.lessonId);
     if (state.sessionId) {
       pauseFlags.current[state.sessionId] = true;
-      try { await cancelUpload(state.sessionId); } catch { /* ignore */ }
+      try { await cancelUpload(state.sessionId); } catch {  }
     }
     patchUpload(lesson.lessonId, { file: null, sessionId: null, status: 'idle', percent: 0, errorMsg: '' });
   };

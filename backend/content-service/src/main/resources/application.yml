@@ -32,7 +32,7 @@ spring:
 content:
   storage:
     local:
-      base-path: ${STORAGE_PATH:/home/ahmed-yassine/Desktop/udemy-clone/backend/uploads}
+      base-path: ${STORAGE_PATH:/app/uploads}
       base-url: ${STORAGE_BASE_URL:http://localhost:8084}
     s3:
       bucket-name: ${S3_BUCKET_NAME:}
@@ -41,7 +41,7 @@ content:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:

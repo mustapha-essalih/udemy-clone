@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 @Configuration
 public class WebConfig implements WebFluxConfigurer {
 
-    @Value("${content.storage.local.base-path:/home/ahmed-yassine/Desktop/udemy-clone/backend/uploads}")
+    @Value("${content.storage.local.base-path:/app/uploads}")
     private String basePath;
 
     @PostConstruct

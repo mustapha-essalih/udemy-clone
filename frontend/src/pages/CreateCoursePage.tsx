@@ -25,7 +25,6 @@ const UPLOAD_CONCURRENCY = 3;
 let draftCounter = 0;
 const newDraftId = () => `d${++draftCounter}`;
 
-// ─── Icons ───
 const CheckIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 12l5 5L20 7"/>
@@ -52,7 +51,6 @@ const RocketIcon = () => (
   </svg>
 );
 
-// Nav icons
 const DashboardIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
     <rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/>
@@ -86,7 +84,6 @@ const CogIcon = () => (
   </svg>
 );
 
-// ─── Sidebar ───
 function Sidebar({ email }: { email: string }) {
   const initial = email ? email[0].toUpperCase() : '?';
   const nav = [
@@ -139,7 +136,6 @@ function Sidebar({ email }: { email: string }) {
   );
 }
 
-// ─── Submitted modal ───
 function SubmittedScreen({ onReset, courseId }: { onReset: () => void; courseId: string }) {
   const navigate = useNavigate();
   return (
@@ -161,7 +157,6 @@ function SubmittedScreen({ onReset, courseId }: { onReset: () => void; courseId:
   );
 }
 
-// ─── Main ───
 export default function CreateCoursePage() {
   const { user } = useAuth();
 
@@ -219,8 +214,7 @@ export default function CreateCoursePage() {
 
   const goTo = (i: number) => {
     const next = Math.max(0, Math.min(4, i));
-    // Pause any active uploads when leaving the upload step so they don't
-    // keep writing to state after the user has navigated away.
+
     if (step === 2 && next !== 2) {
       Object.entries(uploads).forEach(([lessonId, state]) => {
         if (state.status === 'uploading' && state.sessionId) {
@@ -233,7 +227,6 @@ export default function CreateCoursePage() {
     setStep(next);
   };
 
-  // ─── Course creation ───
   const handleCreateCourse = async () => {
     setCreating(true);
     setCreateError('');
@@ -290,7 +283,6 @@ export default function CreateCoursePage() {
     }
   };
 
-  // ─── Chunked upload ───
   const sendChunks = async (lessonId: string, file: File, sessionId: string, indices: number[]) => {
     let cursor = 0;
     const worker = async () => {
@@ -362,7 +354,7 @@ export default function CreateCoursePage() {
     const state = uploads[lessonId];
     if (!state?.sessionId) return;
     pauseFlags.current[state.sessionId] = true;
-    try { await pauseUpload(state.sessionId); } catch { /* best-effort */ }
+    try { await pauseUpload(state.sessionId); } catch {  }
     patchUpload(lessonId, { status: 'paused' });
   }, [uploads, patchUpload]);
 
@@ -395,7 +387,7 @@ export default function CreateCoursePage() {
     const state = uploads[lessonId];
     if (state?.sessionId) {
       pauseFlags.current[state.sessionId] = true;
-      try { await cancelUpload(state.sessionId); } catch { /* best-effort */ }
+      try { await cancelUpload(state.sessionId); } catch {  }
     }
     patchUpload(lessonId, { file: null, sessionId: null, status: 'idle', percent: 0, speed: 0, errorMsg: '', linkedUrl: null });
   }, [uploads, patchUpload]);
@@ -404,12 +396,11 @@ export default function CreateCoursePage() {
     const state = uploads[lessonId];
     if (state?.sessionId) {
       pauseFlags.current[state.sessionId] = true;
-      try { await cancelUpload(state.sessionId); } catch { /* best-effort */ }
+      try { await cancelUpload(state.sessionId); } catch {  }
     }
     patchUpload(lessonId, { file: null, sessionId: null, status: 'idle', percent: 0, speed: 0, errorMsg: '', linkedUrl: null });
   }, [uploads, patchUpload]);
 
-  // ─── Step navigation ───
   const handleNext = async () => {
     if (step === 1) {
       if (courseId) { goTo(2); return; }
@@ -435,7 +426,7 @@ export default function CreateCoursePage() {
         <Sidebar email={user?.email ?? ''} />
 
         <div className="main">
-          {/* Topbar */}
+          {}
           <div className="topbar">
             <div className="crumbs">
               <Link to="/dashboard">Instructor</Link>
@@ -455,7 +446,7 @@ export default function CreateCoursePage() {
             </div>
           </div>
 
-          {/* Stepper */}
+          {}
           <div className="stepper">
             {STEPS.map((s, i) => (
               <div
@@ -474,10 +465,10 @@ export default function CreateCoursePage() {
             ))}
           </div>
 
-          {/* Canvas */}
+          {}
           <div className="canvas">
             <div className="canvas-inner">
-              {/* Page header */}
+              {}
               <div className="eyebrow">{ph.eyebrow}</div>
               <h1 className="page-h">{ph.title}</h1>
               <p className="page-sub">{ph.sub}</p>
@@ -527,7 +518,7 @@ export default function CreateCoursePage() {
                 />
               )}
 
-              {/* Navigation */}
+              {}
               <div className="step-nav">
                 <button
                   type="button"
@@ -558,14 +549,14 @@ export default function CreateCoursePage() {
         </div>
       </div>
 
-      {/* Toast */}
+      {}
       {toast && (
         <div className="toast">
           <CheckIcon /> {toast}
         </div>
       )}
 
-      {/* Submitted modal */}
+      {}
       {submitted && (
         <SubmittedScreen onReset={() => { setSubmitted(false); setStep(0); }} courseId={courseId} />
       )}

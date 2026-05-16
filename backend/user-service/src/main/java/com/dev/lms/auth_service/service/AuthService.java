@@ -71,7 +71,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setStatus(UserStatus.ACTIVE);
         
-        // Fetch existing role instead of creating it
+
         Role roleEntity = roleRepository.findByName(role)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 

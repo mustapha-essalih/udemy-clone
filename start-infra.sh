@@ -1,7 +1,18 @@
 #!/bin/bash
 set -e
 
-COMPOSE_FILE="$(dirname "$0")/docker-compose.yml"
+SCRIPT_DIR="$(dirname "$0")"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+ENV_FILE="$SCRIPT_DIR/.env"
+
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  source "$ENV_FILE"
+  set +a
+fi
+
+: "${ELASTICSEARCH_PASSWORD:?ELASTICSEARCH_PASSWORD is not set in .env}"
+: "${KAFKA_BOOTSTRAP_SERVERS:=localhost:9092}"
 
 case "$1" in
   up)
@@ -10,7 +21,7 @@ case "$1" in
     echo "Starting Elasticsearch + Kafka (KRaft mode)..."
     docker compose -f "$COMPOSE_FILE" up -d elasticsearch kafka
     echo "Waiting for Elasticsearch to be healthy..."
-    until docker compose -f "$COMPOSE_FILE" exec elasticsearch curl -s -u elastic:9898 http://localhost:9200/_cluster/health 2>/dev/null | grep -qE '"status":"(green|yellow)"'; do
+    until docker compose -f "$COMPOSE_FILE" exec elasticsearch curl -s -u "elastic:${ELASTICSEARCH_PASSWORD}" http://localhost:9200/_cluster/health 2>/dev/null | grep -qE '"status":"(green|yellow)"'; do
       echo "  ES not ready yet, waiting 5s..."
       sleep 5
     done
@@ -23,7 +34,7 @@ case "$1" in
     echo "Kafka is healthy."
     echo ""
     echo "Infrastructure ready:"
-    echo "  Elasticsearch: http://localhost:9200  (user: elastic / pass: 9898)"
+    echo "  Elasticsearch: http://localhost:9200  (user: elastic / pass: <ELASTICSEARCH_PASSWORD from .env>)"
     echo "  Kafka:         localhost:9092"
     ;;
   down)
@@ -32,7 +43,7 @@ case "$1" in
   kibana)
     echo "Starting Kibana..."
     docker compose -f "$COMPOSE_FILE" --profile tools up -d kibana
-    echo "Kibana: http://localhost:5601  (user: kibana_system / pass: 9898)"
+    echo "Kibana: http://localhost:5601  (user: kibana_system / pass: <ELASTICSEARCH_PASSWORD from .env>)"
     ;;
   logs)
     docker compose -f "$COMPOSE_FILE" logs -f "${2:-elasticsearch}"

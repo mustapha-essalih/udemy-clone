@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.dev.lms.common.request.RegisterRequest;
 import com.dev.lms.common.response.RegistrationResponse;
 
-
 @Component
 @RequestScope
 public class AuthServiceClient {

@@ -41,7 +41,7 @@ export default function StepBasicInfo({ data, set, errors }: Props) {
   return (
     <div className="step-content">
 
-      {/* Card 1 — About */}
+      {}
       <div className="card card-pad" style={{ marginBottom: 20 }}>
         <div className="card-h">
           <h3>Tell us about your course</h3>
@@ -101,7 +101,7 @@ export default function StepBasicInfo({ data, set, errors }: Props) {
         </div>
       </div>
 
-      {/* Card 2 — Category */}
+      {}
       <div className="card card-pad" style={{ marginBottom: 20 }}>
         <div className="card-h">
           <h3>Category</h3>
@@ -183,7 +183,7 @@ export default function StepBasicInfo({ data, set, errors }: Props) {
         </div>
       </div>
 
-      {/* Card 3 — Pricing */}
+      {}
       <div className="card card-pad">
         <div className="card-h">
           <h3>Pricing</h3>

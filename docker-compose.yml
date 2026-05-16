@@ -7,7 +7,7 @@ services:
       - node.name=lms-es
       - cluster.name=lms-cluster
       - discovery.type=single-node
-      - ELASTIC_PASSWORD=9898
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
@@ -27,7 +27,7 @@ services:
     networks:
       - lms-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -u elastic:9898 http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      test: ["CMD-SHELL", "curl -s -u elastic:${ELASTICSEARCH_PASSWORD} http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -40,7 +40,7 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=9898
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
     ports:
       - "5601:5601"
     networks:

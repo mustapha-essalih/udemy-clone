@@ -33,13 +33,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/courses/categories", "/api/courses/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/courses/subcategories", "/api/courses/subcategories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/courses/*/info").hasAnyRole("STUDENT", "INSTRUCTOR", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/courses/categories", "/api/courses/categoriesinfo").hasAnyRole("STUDENT", "INSTRUCTOR", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/courses/instructor").hasAnyRole("INSTRUCTOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/courses/drafts/pending").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/courses/drafts/*/approve",
-                                "/api/courses/drafts/*/reject").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/courses/draftsreject").hasAnyRole("MANAGER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(new GatewayHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();

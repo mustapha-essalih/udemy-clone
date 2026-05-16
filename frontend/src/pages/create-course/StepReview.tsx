@@ -58,14 +58,14 @@ export default function StepReview({ data, sections, targets, uploads, onSubmit 
   return (
     <div className="step-content">
       <div className="review-grid">
-        {/* Left: course summary */}
+        {}
         <div className="card review-summary">
           <div className="card-h">
             <h3>Course summary</h3>
             <span className="count mono">DRAFT · v1</span>
           </div>
 
-          {/* Hero */}
+          {}
           <div style={{ padding: '20px 0', borderBottom: '1px solid var(--hairline)', marginBottom: 4 }}>
             <div className="eyebrow" style={{ marginBottom: 6 }}>
               {(data.category || 'uncategorized').toUpperCase()} · {(data.level || '').toUpperCase()}
@@ -76,7 +76,7 @@ export default function StepReview({ data, sections, targets, uploads, onSubmit 
             {data.subtitle && <p className="muted" style={{ fontSize: 15 }}>{data.subtitle}</p>}
           </div>
 
-          {/* Metadata rows */}
+          {}
           {[
             { k: 'Description', v: data.description || '—', pre: true },
             { k: 'Category',    v: `${data.category || '—'} · ${data.subcategory || '—'}` },
@@ -92,7 +92,7 @@ export default function StepReview({ data, sections, targets, uploads, onSubmit 
             </div>
           ))}
 
-          {/* Curriculum preview */}
+          {}
           <div className="curriculum-preview">
             {sections.map((s, si) => (
               <div key={s.draftId} className="cp-section">
@@ -123,7 +123,7 @@ export default function StepReview({ data, sections, targets, uploads, onSubmit 
           </div>
         </div>
 
-        {/* Right: checklist + submit */}
+        {}
         <div className="review-side" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card checklist-card">
             <h4>Submission checklist</h4>

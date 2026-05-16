@@ -92,7 +92,7 @@ export default function StepUpload({ targets, uploads, activeLessonId, setActive
   return (
     <div className="step-content">
       <div className="upload-shell">
-        {/* Left: lesson list */}
+        {}
         <div className="card lesson-list-card">
           <div className="lesson-list-h">Lessons · pick to upload</div>
           {groups.map((g, sidx) => (
@@ -126,7 +126,7 @@ export default function StepUpload({ targets, uploads, activeLessonId, setActive
           ))}
         </div>
 
-        {/* Right: upload pane */}
+        {}
         {active ? (
           <UploadPane
             target={active}
@@ -192,7 +192,7 @@ function UploadPane({ target, state, onFileSelect, onStart, onPause, onResume, o
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Lesson info bar */}
+      {}
       <div className="lesson-info-bar">
         <span className={`lesson-info-icon${isVideo ? ' video' : ' pdf'}`}>
           {isVideo ? <VideoIcon /> : isPdf ? <PdfIcon /> : <ArticleIcon />}
@@ -208,7 +208,7 @@ function UploadPane({ target, state, onFileSelect, onStart, onPause, onResume, o
         )}
       </div>
 
-      {/* Dropzone */}
+      {}
       {state.status === 'idle' && !state.file && (
         <div
           className={`dropzone${drag ? ' drag' : ''}`}
@@ -226,20 +226,7 @@ function UploadPane({ target, state, onFileSelect, onStart, onPause, onResume, o
             ref={inputRef}
             type="file"
             hidden
-            accept={isVideo ? 'video/*' : isPdf ? '.pdf' : '.pdf,.doc,.docx,.txt,.html'}
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) onFileSelect(f); }}
-          />
-          <div className="formats">
-            {isVideo
-              ? 'MP4 · MOV · WEBM · max 4 GB · H.264 recommended'
-              : isPdf
-              ? 'PDF · max 100 MB · text-based PDFs preferred'
-              : 'PDF · DOC · DOCX · TXT · HTML · max 100 MB'}
-          </div>
-        </div>
-      )}
-
-      {/* File selected, not started */}
+            accept={isVideo ? 'video}
       {state.status === 'idle' && state.file && (
         <div className="upload-progress-card">
           <div className="upload-row">
@@ -264,7 +251,7 @@ function UploadPane({ target, state, onFileSelect, onStart, onPause, onResume, o
         </div>
       )}
 
-      {/* In progress / done / error */}
+      {}
       {(state.status === 'uploading' || state.status === 'starting' || state.status === 'paused' || state.status === 'done' || state.status === 'error') && state.file && (
         <div className="upload-progress-card">
           <div className="upload-row">
@@ -321,7 +308,7 @@ function UploadPane({ target, state, onFileSelect, onStart, onPause, onResume, o
         </div>
       )}
 
-      {/* Linked summary */}
+      {}
       {state.status === 'done' && state.linkedUrl && (
         <div className="upload-progress-card">
           <div className="upload-row">

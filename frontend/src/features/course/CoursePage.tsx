@@ -4,8 +4,6 @@ import { getCourse } from '../../api/courses';
 import type { CourseResponse, SectionResponse, LessonResponse } from '../../api/courses';
 import './course.css';
 
-// ─── SVG Icons ────────────────────────────────────────────────────────────────
-
 type Svg = React.SVGProps<SVGSVGElement>;
 const IcoSearch = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>;
 const IcoMenu   = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" {...p}><path d="M4 6h16M4 12h16M4 18h16"/></svg>;
@@ -20,8 +18,6 @@ const IcoClock  = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="curre
 const IcoGlobe  = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>;
 const IcoDoc    = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>;
 const IcoQuiz   = (p: Svg) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...p}><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>;
-
-// ─── Static data ──────────────────────────────────────────────────────────────
 
 const LEARN_ITEMS = [
   'Use generative AI tools confidently to draft, summarise and analyse work documents in minutes.',
@@ -63,8 +59,6 @@ const REC_COURSES = [
   { thumbClass: 'ts-rec-thumb-4', thumbLabel: 'change management',     title: 'Leading AI Adoption on Small Teams', author: 'Anouk Verhoeven', rating: 4.6, count: '986',   price: '$14.99', was: '$79.99' },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function Stars({ value, size = 16 }: { value: number; size?: number }) {
   const full  = Math.min(5, Math.floor(value));
   const half  = value - full >= 0.25 && value - full < 0.75;
@@ -92,8 +86,6 @@ function getLessonIcon(lesson: LessonResponse): React.ReactNode {
   if (lesson.lessonType === 'TEXT' || lesson.lessonType === 'ARTICLE') return <IcoDoc className="ts-lecture-ico" width={16} height={16}/>;
   return <IcoQuiz className="ts-lecture-ico" width={16} height={16}/>;
 }
-
-// ─── Header ───────────────────────────────────────────────────────────────────
 
 function Header() {
   return (
@@ -127,8 +119,6 @@ function Header() {
   );
 }
 
-// ─── Curriculum section ───────────────────────────────────────────────────────
-
 function CurriculumSection({ section, index }: { section: SectionResponse; index: number }) {
   const totalMin = section.lessons.reduce((s, l) => s + (l.durationMinutes ?? 0), 0);
   return (
@@ -154,8 +144,6 @@ function CurriculumSection({ section, index }: { section: SectionResponse; index
     </details>
   );
 }
-
-// ─── Purchase card ────────────────────────────────────────────────────────────
 
 function PurchaseCard({ course }: { course: CourseResponse }) {
   const originalPrice = course.price ? Math.round(course.price * 5.5 / 10) * 10 - 1 : null;
@@ -205,8 +193,6 @@ function PurchaseCard({ course }: { course: CourseResponse }) {
   );
 }
 
-// ─── Main CoursePage ──────────────────────────────────────────────────────────
-
 export default function CoursePage() {
   const { id } = useParams<{ id: string }>();
   const [course, setCourse]       = useState<CourseResponse | null>(null);
@@ -254,7 +240,7 @@ export default function CoursePage() {
 
   const totalLectures = course.sections.reduce((s, sec) => s + sec.lessons.length, 0);
   const totalMin      = course.courseDurationMinutes;
-  const instructorInitials = getInitials(course.instructorId.slice(0, 6)); // fallback initials
+  const instructorInitials = getInitials(course.instructorId.slice(0, 6));
   const ratingDisplay = course.rating > 0 ? course.rating : 4.7;
   const updatedDate = new Date(course.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -262,14 +248,14 @@ export default function CoursePage() {
 
   return (
     <div className="tessera-page">
-      {/* Google Fonts */}
+      {}
       <link rel="preconnect" href="https://fonts.googleapis.com"/>
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin=""/>
       <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
       <Header/>
 
-      {/* ─── HERO ─────────────────────────────────────────────────── */}
+      {}
       <section className="ts-hero">
         <div className="ts-container">
           <div className="ts-hero-inner">
@@ -320,7 +306,7 @@ export default function CoursePage() {
               </div>
             </div>
 
-            {/* ─── Sticky purchase card ─── */}
+            {}
             <aside className="ts-rail-wrap">
               <PurchaseCard course={course}/>
             </aside>
@@ -328,12 +314,12 @@ export default function CoursePage() {
         </div>
       </section>
 
-      {/* ─── MAIN CONTENT ─────────────────────────────────────────── */}
+      {}
       <div className="ts-container">
         <div className="ts-main">
           <div className="ts-content">
 
-            {/* WHAT YOU'LL LEARN */}
+            {}
             <section className="ts-block" id="learn">
               <div className="ts-learn-card">
                 <h2 className="ts-block-h2">What you'll <em>learn</em></h2>
@@ -348,7 +334,7 @@ export default function CoursePage() {
               </div>
             </section>
 
-            {/* CURRICULUM */}
+            {}
             <section className="ts-block" id="curriculum">
               <h2 className="ts-block-h2">Course <em>content</em></h2>
               <div className="ts-curriculum-meta">
@@ -374,7 +360,7 @@ export default function CoursePage() {
               </div>
             </section>
 
-            {/* REQUIREMENTS */}
+            {}
             <section className="ts-block" id="requirements">
               <h2 className="ts-block-h2">Requirements</h2>
               <ul className="ts-req-list">
@@ -382,7 +368,7 @@ export default function CoursePage() {
               </ul>
             </section>
 
-            {/* DESCRIPTION */}
+            {}
             <section className="ts-block" id="description">
               <h2 className="ts-block-h2">Description</h2>
               <div className={`ts-show-more-wrap${descCollapsed ? ' ts-collapsed' : ''}`}>
@@ -411,7 +397,7 @@ export default function CoursePage() {
               </div>
             </section>
 
-            {/* INSTRUCTOR */}
+            {}
             <section className="ts-block" id="instructor">
               <h2 className="ts-block-h2">Instructor</h2>
               <div className="ts-instructor-card">
@@ -444,7 +430,7 @@ export default function CoursePage() {
               </div>
             </section>
 
-            {/* REVIEWS */}
+            {}
             <section className="ts-block" id="reviews">
               <h2 className="ts-block-h2">Student feedback</h2>
 
@@ -494,7 +480,7 @@ export default function CoursePage() {
               </div>
             </section>
 
-            {/* RECOMMENDED */}
+            {}
             <section className="ts-block" id="recommended">
               <h2 className="ts-block-h2">Students also bought</h2>
               <p className="ts-block-sub">Continue building your AI fluency with hand-picked next steps from instructors students rated highly.</p>
@@ -524,7 +510,7 @@ export default function CoursePage() {
 
           </div>
 
-          {/* Empty right rail (purchase card is in hero, sticky) */}
+          {}
           <div className="ts-rail" aria-hidden="true"/>
         </div>
       </div>

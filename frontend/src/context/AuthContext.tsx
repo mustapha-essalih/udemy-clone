@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await authApi.logout(refreshToken);
       } catch {
-        // best-effort
+
       }
     }
     localStorage.clear();

@@ -50,7 +50,7 @@ export interface ResumeUploadResponse {
   missingChunks: number[];
 }
 
-export const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB
+export const CHUNK_SIZE = 5 * 1024 * 1024;
 
 export const startUpload = (data: StartUploadRequest) =>
   client.post<{ data: StartUploadResponse }>('/content/upload/start', data);

@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import type { CourseResponse } from '../api/courses';
 import { listCourses } from '../api/courses';
 
-
 export default function DashboardPage() {
   const { user, logout, isInstructor, isManager, isAdmin } = useAuth();
   const navigate = useNavigate();

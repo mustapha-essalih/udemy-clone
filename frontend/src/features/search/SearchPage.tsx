@@ -11,8 +11,6 @@ import {
 } from '../../api/search';
 import './lumen.css';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type LumenFilters = Partial<{
   rating: number;
   language: string[];
@@ -22,8 +20,6 @@ type LumenFilters = Partial<{
   features: string[];
   subs: string[];
 }>;
-
-// ─── Gradient / glyph helpers ────────────────────────────────────────────────
 
 const GRADIENTS = [
   { a: '#7C3AED', b: '#1E1B4B' }, { a: '#06B6D4', b: '#0C4A6E' },
@@ -45,8 +41,6 @@ const estOriginal = (p: number | null) => p ? Math.round(p * 1.85 / 10) * 10 - 1
 const discountPct = (p: number | null, o: number | null) =>
   p && o && o > p ? Math.round((1 - p / o) * 100) : 0;
 
-// ─── Level mapping ────────────────────────────────────────────────────────────
-
 const LEVEL_TO_API: Record<string, string> = {
   Beginner: 'BEGINNER', Intermediate: 'INTERMEDIATE',
   Advanced: 'ADVANCED', 'All Levels': 'ALL_LEVELS',
@@ -67,8 +61,6 @@ function durationToApiBuckets(durations: string[]): DurationBucket[] {
   return Array.from(s);
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
 type SvgP = React.SVGProps<SVGSVGElement>;
 const IcoSearch  = (p: SvgP) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>;
 const IcoCart    = (p: SvgP) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 4h2l2.4 11.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.5L22 8H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>;
@@ -78,8 +70,6 @@ const IcoFilter  = (p: SvgP) => <svg viewBox="0 0 24 24" fill="none" stroke="cur
 const IcoClose   = (p: SvgP) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M6 6l12 12M18 6 6 18"/></svg>;
 const IcoTrash   = (p: SvgP) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg>;
 const IcoBolt    = (p: SvgP) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>;
-
-// ─── Logo ─────────────────────────────────────────────────────────────────────
 
 function Logo() {
   return (
@@ -93,8 +83,6 @@ function Logo() {
     </a>
   );
 }
-
-// ─── Stars ────────────────────────────────────────────────────────────────────
 
 function Stars({ value }: { value: number }) {
   const full = Math.floor(value);
@@ -114,8 +102,6 @@ function Stars({ value }: { value: number }) {
     </span>
   );
 }
-
-// ─── Categories mega-menu ─────────────────────────────────────────────────────
 
 const CATEGORIES = [
   { id: 'dev',    label: 'Development',  subs: ['Web Development','Mobile Development','Game Development','Data Engineering','DevOps & Cloud','Programming Languages','Software Architecture','Embedded Systems'] },
@@ -219,8 +205,6 @@ function CategoriesMenu() {
   );
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
-
 interface NavbarProps {
   inputValue: string;
   onInputChange: (v: string) => void;
@@ -264,7 +248,7 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
           <CategoriesMenu />
         </nav>
 
-        {/* Search bar */}
+        {}
         <div className="lm-navbar-search-wrap">
           <label className="lm-search w-full flex items-center gap-2 px-4 cursor-text" style={{ height: 40 }}>
             <IcoSearch width="16" height="16" style={{ color: 'var(--lm-muted)', flexShrink: 0 }}/>
@@ -288,7 +272,7 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
             )}
           </label>
 
-          {/* Autocomplete dropdown */}
+          {}
           {showSuggestions && suggestions.length > 0 && (
             <ul
               className="lm-fade"
@@ -313,7 +297,7 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
         </div>
 
         <div className="lm-navbar-right">
-          {/* Cart */}
+          {}
           <div ref={cartRef} style={{ position: 'relative' }}>
             {iconBtn(
               () => setCartOpen(o => !o),
@@ -382,8 +366,6 @@ function Navbar({ inputValue, onInputChange, onSearch, onClear, onSuggestionClic
   );
 }
 
-// ─── Filter groups ────────────────────────────────────────────────────────────
-
 interface FilterGroup {
   id: string;
   label: string;
@@ -405,8 +387,6 @@ const FILTER_GROUPS: FilterGroup[] = [
   { id: 'features', label: 'Features',        kind: 'check',
     options: [{ v: 'captions', label: 'Closed captions' }, { v: 'quizzes', label: 'Quizzes' }, { v: 'exercises', label: 'Coding exercises' }, { v: 'certificate', label: 'Certificate' }] },
 ];
-
-// ─── Accordion ────────────────────────────────────────────────────────────────
 
 function Accordion({ label, defaultOpen, count, children }: {
   label: string; defaultOpen: boolean; count: number; children: React.ReactNode;
@@ -433,8 +413,6 @@ function Accordion({ label, defaultOpen, count, children }: {
     </div>
   );
 }
-
-// ─── Filter Sidebar ───────────────────────────────────────────────────────────
 
 function FilterSidebar({ filters, setFilters, embedded }: {
   filters: LumenFilters;
@@ -520,8 +498,6 @@ function FilterSidebar({ filters, setFilters, embedded }: {
   );
 }
 
-// ─── Course Card ──────────────────────────────────────────────────────────────
-
 function CourseCard({ course, inCart, onAdd, onRemove }: {
   course: CourseHit; inCart: boolean;
   onAdd: (c: CourseHit) => void; onRemove: (id: string) => void;
@@ -545,7 +521,7 @@ function CourseCard({ course, inCart, onAdd, onRemove }: {
       </div>
 
       <div className="p-4 pt-3 flex flex-col gap-2 flex-1">
-        {/* Meta row */}
+        {}
         <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--lm-muted)' }}>
           <span style={{ padding: '2px 6px', borderRadius: 4, background: 'var(--lm-line-2)' }}>{levelLabel}</span>
           {hours && <><span>·</span><span>{hours}</span></>}
@@ -575,7 +551,7 @@ function CourseCard({ course, inCart, onAdd, onRemove }: {
           </div>
         )}
 
-        {/* Price + CTA */}
+        {}
         <div className="mt-auto pt-3 flex items-end justify-between gap-2">
           <div>
             {c.isFree ? (
@@ -606,8 +582,6 @@ function CourseCard({ course, inCart, onAdd, onRemove }: {
   );
 }
 
-// ─── Skeleton card ────────────────────────────────────────────────────────────
-
 function SkeletonCard({ delay = 0 }: { delay?: number }) {
   return (
     <div className="lm-card overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
@@ -622,8 +596,6 @@ function SkeletonCard({ delay = 0 }: { delay?: number }) {
     </div>
   );
 }
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
 
 function FooterCol({ title, links }: { title: string; links: string[] }) {
   return (
@@ -643,8 +615,6 @@ function FooterCol({ title, links }: { title: string; links: string[] }) {
     </div>
   );
 }
-
-// ─── URL ↔ filter serialisation ───────────────────────────────────────────────
 
 function parseFiltersFromParams(sp: URLSearchParams): LumenFilters {
   const f: LumenFilters = {};
@@ -671,8 +641,6 @@ function toUrlParams(q: string, sort: SortOption, filters: LumenFilters, page: n
   return p;
 }
 
-// ─── Sort options ─────────────────────────────────────────────────────────────
-
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'RELEVANCE',  label: 'Most relevant'     },
   { value: 'RATING',     label: 'Highest rated'     },
@@ -681,8 +649,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'PRICE_ASC',  label: 'Price: low → high' },
   { value: 'PRICE_DESC', label: 'Price: high → low' },
 ];
-
-// ─── Main SearchPage ──────────────────────────────────────────────────────────
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -704,18 +670,15 @@ export default function SearchPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Sync all search/filter state to URL (read-back is safe: searchParams not in deps)
   useEffect(() => {
     setSearchParams(toUrlParams(query, sort, filters, page), { replace: true });
-  }, [query, sort, filters, page, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [query, sort, filters, page, setSearchParams]);
 
-  // Update filters and always reset to page 0
   const applyFilters = useCallback((updater: React.SetStateAction<LumenFilters>) => {
     setFilters(updater);
     setPage(0);
   }, []);
 
-  // Build API params from Lumen filter state
   const buildParams = useCallback(() => {
     const levels    = (filters.level ?? []).map(l => LEVEL_TO_API[l] ?? l.toUpperCase());
     const durations = durationToApiBuckets(filters.duration ?? []);
@@ -769,7 +732,6 @@ export default function SearchPage() {
   const addToCart    = (c: CourseHit) => setCart(cur => cur.find(x => x.courseId === c.courseId) ? cur : [...cur, c]);
   const removeFromCart = (id: string) => setCart(cur => cur.filter(x => x.courseId !== id));
 
-  // Active filter chips
   const activeChips = useMemo(() => {
     type Chip = { gid: keyof LumenFilters; v: string | number; label: string; single: boolean };
     const chips: Chip[] = [];
@@ -817,7 +779,7 @@ export default function SearchPage() {
       <main className="lm-page-main">
         <div className={`lm-two-col${!sidebarHidden ? ' lm-has-sidebar' : ''}`}>
 
-          {/* Desktop sidebar */}
+          {}
           {!sidebarHidden && (
             <div className="lm-sidebar-col">
               <div className="lm-sidebar-sticky">
@@ -826,9 +788,9 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Main content */}
+          {}
           <div style={{ minWidth: 0 }}>
-            {/* Toolbar */}
+            {}
             <div className="lm-toolbar">
               <div>
                 <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4, color: 'var(--lm-ink)' }}>
@@ -842,15 +804,15 @@ export default function SearchPage() {
               </div>
 
               <div className="lm-toolbar-actions">
-                {/* Mobile: all filters button */}
+                {}
                 <button onClick={() => setDrawerOpen(true)} className="lm-filter-mobile lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
                   <IcoFilter width="14" height="14"/> All filters
                 </button>
-                {/* Desktop: toggle sidebar */}
+                {}
                 <button onClick={() => setSidebarHidden(h => !h)} className="lm-filter-desktop lm-btn lm-btn-ghost" style={{ height: 40, fontSize: 13 }}>
                   <IcoFilter width="14" height="14"/> {sidebarHidden ? 'Show' : 'Hide'} filters
                 </button>
-                {/* Sort */}
+                {}
                 <div className="lm-sort-row">
                   <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lm-muted)' }}>sort</span>
                   <select
@@ -866,7 +828,7 @@ export default function SearchPage() {
               </div>
             </div>
 
-            {/* Active filter chips */}
+            {}
             {activeChips.length > 0 && (
               <div className="flex items-center flex-wrap gap-2 mb-5">
                 {activeChips.map((chip, i) => (
@@ -883,14 +845,14 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Error */}
+            {}
             {error && (
               <div className="rounded-2xl px-4 py-3 mb-4" style={{ fontSize: 13, background: 'oklch(97% 0.02 30)', border: '1px solid oklch(88% 0.05 30)', color: 'oklch(42% 0.15 25)' }}>
                 {error}
               </div>
             )}
 
-            {/* Grid */}
+            {}
             {loading ? (
               <div className={`lm-card-grid ${sidebarHidden ? 'lm-grid-nosidebar' : 'lm-grid-sidebar'}`}>
                 {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} delay={i * 60}/>)}
@@ -915,7 +877,7 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
               <div className="mt-12 pt-6 flex items-center justify-between flex-wrap gap-3" style={{ borderTop: '1px solid var(--lm-line-2)', fontSize: 12, fontFamily: "'JetBrains Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lm-muted)' }}>
                 <span>showing {(page * 12 + 1).toLocaleString()}–{Math.min((page + 1) * 12, result?.total ?? 0).toLocaleString()} of {result?.total.toLocaleString()}</span>
@@ -936,7 +898,7 @@ export default function SearchPage() {
         </div>
       </main>
 
-      {/* Footer */}
+      {}
       <footer style={{ borderTop: '1px solid var(--lm-line-2)', background: 'var(--lm-surface)' }}>
         <div className="lm-footer-inner">
           <div>
@@ -957,10 +919,10 @@ export default function SearchPage() {
         </div>
       </footer>
 
-      {/* Mobile drawer overlay */}
+      {}
       <div className={`lm-drawer-overlay${drawerOpen ? ' open' : ''}`} onClick={() => setDrawerOpen(false)}/>
 
-      {/* Mobile drawer */}
+      {}
       <aside className={`lm-drawer${drawerOpen ? ' open' : ''}`}>
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--lm-line-2)', flexShrink: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--lm-ink)' }}>All filters</span>

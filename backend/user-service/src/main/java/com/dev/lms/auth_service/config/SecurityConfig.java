@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
-    // private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     private final AuthEntryPoint authEntryPoint;
     private final AccessDeniedHandlerImpl accessDeniedHandler;
 
@@ -59,7 +59,6 @@ public class SecurityConfig {
                 .addFilterBefore(new GatewayHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-
 
     static class GatewayHeadersFilter extends OncePerRequestFilter {
 

@@ -23,7 +23,6 @@ public class IndexAdminController {
 
     private final CourseIndexService indexService;
 
-
     @PostMapping("/courses")
     public ResponseEntity<ApiResponse<Void>> indexCourse(@RequestBody CourseIndexEvent event) {
         indexService.index(event);

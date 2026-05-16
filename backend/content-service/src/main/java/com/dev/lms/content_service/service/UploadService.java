@@ -30,7 +30,7 @@ public class UploadService {
     private final UploadSessionRepository sessionRepository;
     private final MediaFileRepository mediaFileRepository;
 
-    @Value("${content.storage.local.base-path:/home/ahmed-yassine/Desktop/udemy-clone/backend/uploads}")
+    @Value("${content.storage.local.base-path:/app/uploads}")
     private String basePath;
 
     @Value("${content.storage.local.base-url:http://localhost:8084}")
