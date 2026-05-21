@@ -1,4 +1,4 @@
-# Course Studio — Production-Grade LMS Platform
+# Course Studio — LMS Platform
 
 A full-stack, event-driven microservices platform for online learning — inspired by Udemy. Built with Java Spring Boot, React, PostgreSQL, Redis, Elasticsearch, Kafka, and Stripe.
 
