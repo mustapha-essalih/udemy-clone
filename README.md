@@ -105,39 +105,8 @@ A full-stack, event-driven microservices platform for online learning — inspir
 | `payment_db` | payment-service | payments, enrollments, lesson_progress, refunds, payouts |
 | `admin_db` | admin-service | course_reviews_queue, reports |
 
-### Course Draft Workflow
 
-```
-Instructor → Redis Draft (5-step wizard)
-    ↓ Submit for Review
-Pending Review (course-service)
-    ↓
-Manager/Admin reviews (admin-service)
-    ↓                ↓
-Approved          Rejected (feedback sent)
-    ↓
-PostgreSQL persist → Kafka event → Elasticsearch index
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Java 25+
-- Node.js 22+
-- Docker & Docker Compose
-- PostgreSQL 16+
-- Maven
-
-### 1. Start Infrastructure
-
-```bash
-./start-infra.sh up
-```
-
-Starts Elasticsearch (9200), Kibana (5601), and Kafka (9092) via Docker Compose.
-
-### 2. Start Backend Services
+### Start Backend Services
 
 ```bash
 cd backend
@@ -173,21 +142,7 @@ Frontend runs at `http://localhost:5173` with API proxy to `http://localhost:808
 
 - **Email:** admin@lms-platform.com
 - **Password:** Admin@123
-
-## Frontend Routes
-
-| Route | Page | Access |
-|-------|------|--------|
-| `/login` | Login | Public |
-| `/register` | Registration | Public |
-| `/` | Dashboard (role-aware home) | Authenticated |
-| `/courses/create` | 5-step course creation wizard | Instructor |
-| `/courses/:id` | Published course landing page | Public |
-| `/courses/:id/manage` | Course detail + upload per lesson | Instructor |
-| `/course-player/:id` | Student course player with curriculum sidebar | Student |
-| `/search` | Search with facets, filters, autocomplete | Public |
-| `/manager` | Course review dashboard (approve/reject) | Manager, Admin |
-
+- 
 ## Key Features
 
 ### Course Creation Wizard
@@ -214,87 +169,6 @@ Byte-range requests via WebFlux for efficient video streaming — supports seeki
 - Idempotency keys prevent duplicate charges
 - Lesson progress tracking per student
 
-## API Endpoints
-
-### Public (no auth)
-| Method | Path | Service | Description |
-|--------|------|---------|-------------|
-| POST | `/api/auth/login` | user-service | Login |
-| POST | `/api/auth/register` | user-service | Register |
-| POST | `/api/auth/refresh` | user-service | Refresh JWT |
-| GET | `/api/courses` | course-service | List published courses |
-| GET | `/api/courses/{id}` | course-service | Course details |
-| GET | `/api/categories` | course-service | List categories |
-| GET | `/api/search/courses` | search-service | Search courses |
-| GET | `/api/search/autocomplete` | search-service | Autocomplete |
-| POST | `/api/webhook/stripe` | payment-service | Stripe webhook |
-| GET | `/api/content/stream/{mediaId}` | content-service | Video stream |
-
-### Authenticated
-| Method | Path | Role | Service | Description |
-|--------|------|------|---------|-------------|
-| POST | `/api/drafts` | INSTRUCTOR | course-service | Create draft |
-| PUT | `/api/drafts/{id}` | INSTRUCTOR | course-service | Update draft |
-| POST | `/api/drafts/{id}/submit` | INSTRUCTOR | course-service | Submit for review |
-| GET | `/api/drafts/{id}` | INSTRUCTOR | course-service | Get draft |
-| POST | `/api/upload/start` | INSTRUCTOR | content-service | Start chunked upload |
-| POST | `/api/upload/chunk` | INSTRUCTOR | content-service | Upload chunk |
-| POST | `/api/upload/complete` | INSTRUCTOR | content-service | Complete upload |
-| POST | `/api/checkout/create-session` | STUDENT | payment-service | Create Stripe session |
-| GET | `/api/reviews/pending` | MANAGER/ADMIN | admin-service | Pending reviews |
-| POST | `/api/reviews/{id}/approve` | MANAGER/ADMIN | admin-service | Approve course |
-| POST | `/api/reviews/{id}/reject` | MANAGER/ADMIN | admin-service | Reject course |
-
-## Project Structure
-
-```
-udemy-clone/
-├── docker-compose.yml         # ES, Kibana, Kafka
-├── start-infra.sh             # Infra lifecycle script
-├── backend/                   # Java microservices
-│   ├── pom.xml                # Multi-module Maven parent
-│   ├── common/                # Shared DTOs, enums, responses
-│   ├── discovery-service/     # Eureka registry
-│   ├── api-gateway/           # Spring Cloud Gateway
-│   ├── user-service/          # Auth + user management
-│   ├── course-service/        # Course + draft management
-│   ├── content-service/       # File upload + streaming
-│   ├── payment-service/       # Stripe + enrollments
-│   ├── search-service/        # Elasticsearch indexing + search
-│   └── admin-service/         # Course review + moderation
-└── frontend/                  # React + TypeScript
-    └── src/
-        ├── api/               # Axios clients per domain
-        ├── components/        # Shared components (ProtectedRoute)
-        ├── context/           # Auth context
-        ├── pages/             # Page components + wizard steps
-        └── features/          # Feature modules (course, search, player)
-```
-
-## Environment Variables
-
-Key variables in `.env`:
-
-| Variable | Description |
-|----------|-------------|
-| `DB_URL_*` | PostgreSQL JDBC URLs per service |
-| `DB_USERNAME_*` | Database usernames |
-| `DB_PASSWORD_*` | Database passwords |
-| `EUREKA_SERVER_URL` | Eureka service URL |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker address |
-| `AWS_ACCESS_KEY_ID` | AWS access key (prod) |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key (prod) |
-| `S3_BUCKET_NAME` | S3 bucket for content (prod) |
-
-## Development
-
-### Code Style
-
-- **Backend:** Controller → Service → Repository pattern. No business logic in controllers. Centralized exception handling — no try/catch in controllers.
-- **Frontend:** Feature-based structure. No comments in code. Tailwind CSS for all styling.
-
 ### Key Conventions
 
 - Each service owns its database — no shared databases, no cross-service joins
@@ -302,23 +176,3 @@ Key variables in `.env`:
 - JWT required for all internal service calls, RBAC enforced per service
 - Webhooks are the source of truth for payments
 - All uploads go through Content Service only
-
-### Event Topics
-
-| Topic | Producer | Consumer(s) | Purpose |
-|-------|----------|-------------|---------|
-| `course.events` | course-service | search-service | Index course on approval |
-| `enrollment.events` | payment-service | — | Enrollment completion |
-
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `./start-infra.sh up` | Start Docker containers |
-| `./start-infra.sh down` | Stop Docker containers |
-| `./start-infra.sh kibana` | Start Kibana |
-| `cd backend && ./run-services.sh` | Start all microservices |
-| `cd backend && mvn clean install` | Build all backend modules |
-| `cd frontend && npm run dev` | Start frontend dev server |
-| `cd frontend && npm run build` | Production build |
-| `cd frontend && npm run lint` | Lint frontend code |
